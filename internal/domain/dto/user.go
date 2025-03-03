@@ -5,12 +5,12 @@ import (
 )
 
 type Register struct {
-	Email        string `json:"email" validate:"required,email"`
-	Username     string `json:"username" validate:"required"`
-	Password     string `json:"password" validate:"required,min=8"`
-	Nama         string `json:"nama" validate:"required"`
-	Institusi    string `json:"institusi" validate:"required"`
-	BidangBisnis string `json:"bidang_bisnis" validate:"required"`
+	Email      string `json:"email" validate:"required,email"`
+	Username   string `json:"username" validate:"required"`
+	Password   string `json:"password" validate:"required,min=8"`
+	Nama       string `json:"nama" validate:"required"`
+	Institusi  string `json:"institusi" validate:"required"`
+	Preferensi string `json:"preferensi" validate:"required"`
 }
 
 type Login struct {

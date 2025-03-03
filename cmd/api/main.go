@@ -10,4 +10,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("Gagal memuat aplikasi: %v", err)
 	}
+
 }

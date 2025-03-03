@@ -4,6 +4,7 @@ import (
 	"innovaspace/internal/app/user/usecase"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/validation"
+	"log"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,12 +30,14 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 	var register dto.Register
 
 	if err := ctx.BodyParser(&register); err != nil {
+		log.Printf("Error parsing request body: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
 	}
 
 	if err := h.validator.Validate(register); err != nil {
+		log.Printf("Validation error: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
 		})

@@ -46,13 +46,13 @@ func (u *UserUsecase) Register(register dto.Register) error {
 	}
 
 	user = entity.User{
-		UserId:       uuid.New(),
-		Email:        register.Email,
-		Username:     register.Username,
-		Password:     string(hashedPassword),
-		Nama:         register.Nama,
-		Institusi:    register.Institusi,
-		BidangBisnis: register.BidangBisnis,
+		UserId:     uuid.New(),
+		Email:      register.Email,
+		Username:   register.Username,
+		Password:   string(hashedPassword),
+		Nama:       register.Nama,
+		Institusi:  register.Institusi,
+		Preferensi: register.Preferensi,
 	}
 
 	err = u.userRepo.Create(&user)

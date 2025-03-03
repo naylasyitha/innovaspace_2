@@ -13,7 +13,7 @@ type User struct {
 	Password     string    `json:"password" gorm:"type:varchar(255)"`
 	Nama         string    `json:"nama" gorm:"type:varchar(255)"`
 	Institusi    string    `json:"institusi" gorm:"type:varchar(255)"`
-	BidangBisnis string    `json:"bidang_bisnis" gorm:"type:varchar(255)"`
+	Preferensi   string    `json:"preferensi" gorm:"type:varchar(255)"`
 	IsPremium    bool      `json:"is_premium" gorm:"type:boolean;default:false"`
 	PremiumStart time.Time `json:"premium_start" gorm:"type:timestamp"`
 	PremiumEnd   time.Time `json:"premium_end"`

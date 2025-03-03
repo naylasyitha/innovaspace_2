@@ -2,12 +2,16 @@ package bootstrap
 
 import (
 	"fmt"
+	MentorHandler "innovaspace/internal/app/mentor/interface/rest"
+	MentorRepository "innovaspace/internal/app/mentor/repository"
+	MentorUsecase "innovaspace/internal/app/mentor/usecase"
 	UserHandler "innovaspace/internal/app/user/interface/rest"
 	UserRepository "innovaspace/internal/app/user/repository"
 	UserUsecase "innovaspace/internal/app/user/usecase"
 	"innovaspace/internal/domain/entity"
 	"innovaspace/internal/infra/env"
 	"innovaspace/internal/infra/fiber"
+	Seed "innovaspace/internal/infra/mysql"
 	"innovaspace/internal/validation"
 	"log"
 
@@ -34,7 +38,7 @@ func Start() error {
 		panic(err)
 	}
 
-	err = database.AutoMigrate(&entity.User{})
+	err = database.AutoMigrate(&entity.User{}, &entity.Mentor{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
@@ -48,6 +52,12 @@ func Start() error {
 	UserRepository := UserRepository.NewUserMySQL(database)
 	UserUsecase := UserUsecase.NewUserUsecase(UserRepository, *inputValidation)
 	UserHandler.NewUserHandler(v1, UserUsecase, *inputValidation)
+
+	MentorRepository := MentorRepository.NewMentorMySQL(database)
+	MentorUsecase := MentorUsecase.NewMentorUsecase(MentorRepository, UserRepository)
+	MentorHandler.NewMentorHandler(v1, MentorUsecase, UserRepository)
+
+	Seed.SeedMentors(database)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }
