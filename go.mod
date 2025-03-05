@@ -39,6 +39,7 @@ require (
 	golang.org/x/crypto v0.35.0
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
+	gorm.io/datatypes v1.2.5
 	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/gorm v1.25.12 // indirect
 	honnef.co/go/tools v0.6.0

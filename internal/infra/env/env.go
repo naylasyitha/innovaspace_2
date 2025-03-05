@@ -1,6 +1,8 @@
 package env
 
 import (
+	"os"
+
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
@@ -16,6 +18,10 @@ type Env struct {
 
 	JwtSecret  string `env:"JWT_SECRET"`
 	JwtExpired int    `env:"JWT_EXPIRED"`
+
+	SupabaseEndpoint   string `env:"SUPABASE_ENDPOINT"`
+	SupabaseToken      string `env:"SUPABASE_TOKEN"`
+	SupabaseBucketName string `env:"SUPABASE_BUCKET_NAME"`
 }
 
 func New() (*Env, error) {
@@ -32,4 +38,8 @@ func New() (*Env, error) {
 	}
 
 	return config, nil
+}
+
+func GetEnv(key string) string {
+	return os.Getenv(key)
 }

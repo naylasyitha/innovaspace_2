@@ -12,12 +12,15 @@ import (
 	"innovaspace/internal/infra/env"
 	"innovaspace/internal/infra/fiber"
 	Seed "innovaspace/internal/infra/mysql"
+	"innovaspace/internal/infra/storage"
 	"innovaspace/internal/validation"
 	"log"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+var SupabaseStorage storage.StorageSupabase
 
 func Start() error {
 	config, err := env.New()
@@ -33,6 +36,7 @@ func Start() error {
 		config.DBPort,
 		config.DBName,
 	)
+
 	database, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
@@ -50,7 +54,7 @@ func Start() error {
 	inputValidation := validation.NewInputValidation()
 
 	UserRepository := UserRepository.NewUserMySQL(database)
-	UserUsecase := UserUsecase.NewUserUsecase(UserRepository, *inputValidation)
+	UserUsecase := UserUsecase.NewUserUsecase(UserRepository, *inputValidation, SupabaseStorage)
 	UserHandler.NewUserHandler(v1, UserUsecase, *inputValidation)
 
 	MentorRepository := MentorRepository.NewMentorMySQL(database)

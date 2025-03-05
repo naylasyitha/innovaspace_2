@@ -27,3 +27,11 @@ type ErrorInputResponse struct {
 	FieldName string `json:"fieldName"`
 	Message   string `json:"message"`
 }
+
+type GetProfile struct {
+	Nama       string `json:"nama" validate:"required"`
+	Username   string `json:"username" validate:"required"`
+	Email      string `json:"email" validate:"required,email"`
+	Preferensi string `json:"preferensi" validate:"required"`
+	Institusi  string `json:"institusi" validate:"required"`
+}

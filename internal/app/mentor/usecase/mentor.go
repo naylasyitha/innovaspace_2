@@ -1,18 +1,16 @@
 package usecase
 
 import (
+	"errors"
 	"innovaspace/internal/app/mentor/repository"
 	UserRepo "innovaspace/internal/app/user/repository"
 	"innovaspace/internal/domain/dto"
-	"innovaspace/internal/domain/entity"
-	"log"
-
-	"github.com/google/uuid"
 )
 
 type MentorUsecaseItf interface {
-	GetMentorsDetails(userId uuid.UUID) ([]entity.Mentor, error)
+	GetMentorDetails(username string) (dto.MentorsDetails, error)
 	GetMentorsByPreferensi(preferensi string) ([]dto.Mentor, error)
+	GetAllMentors() ([]dto.Mentor, error)
 }
 
 type MentorUsecase struct {
@@ -27,20 +25,28 @@ func NewMentorUsecase(mentorRepo repository.MentorMySQLItf, userRepo UserRepo.Us
 	}
 }
 
-func (u MentorUsecase) GetMentorsDetails(userId uuid.UUID) ([]entity.Mentor, error) {
-	user, err := u.userRepo.FindById(userId)
+func (u MentorUsecase) GetMentorDetails(username string) (dto.MentorsDetails, error) {
+	mentor, err := u.mentorRepo.FindByUsername(username)
 	if err != nil {
-		log.Println("User not found:", err)
-		return nil, err
+		return dto.MentorsDetails{}, err
 	}
 
-	mentors, err := u.mentorRepo.FindByPreferensi(user.Preferensi)
-	if err != nil {
-		log.Println("Error fetching mentors:", err)
-		return nil, err
+	if mentor.Username == "" {
+		return dto.MentorsDetails{}, errors.New("mentor not found")
 	}
 
-	return mentors, nil
+	return dto.MentorsDetails{
+		ProfilMentor:    mentor.ProfilMentor,
+		Nama:            mentor.Nama,
+		Deskripsi:       mentor.Deskripsi,
+		Spesialisasi:    mentor.Spesialisasi,
+		Pendidikan:      mentor.Pendidikan,
+		PengalamanKerja: string(mentor.PengalamanKerja),
+		Pencapaian:      string(mentor.Pencapaian),
+		Keahlian:        string(mentor.Keahlian),
+		TopikAjar:       string(mentor.TopikAjar),
+		Email:           mentor.Email,
+	}, nil
 }
 
 func (u MentorUsecase) GetMentorsByPreferensi(preferensi string) ([]dto.Mentor, error) {
@@ -55,8 +61,27 @@ func (u MentorUsecase) GetMentorsByPreferensi(preferensi string) ([]dto.Mentor, 
 			Nama:         mentor.Nama,
 			Spesialisasi: mentor.Spesialisasi,
 			Email:        mentor.Email,
+			ProfilMentor: mentor.ProfilMentor,
 		})
 	}
 
+	return response, nil
+}
+
+func (u MentorUsecase) GetAllMentors() ([]dto.Mentor, error) {
+	mentors, err := u.mentorRepo.GetAllMentors()
+	if err != nil {
+		return nil, err
+	}
+
+	var response []dto.Mentor
+	for _, mentor := range mentors {
+		response = append(response, dto.Mentor{
+			Nama:         mentor.Nama,
+			Spesialisasi: mentor.Spesialisasi,
+			Email:        mentor.Email,
+			ProfilMentor: mentor.ProfilMentor,
+		})
+	}
 	return response, nil
 }

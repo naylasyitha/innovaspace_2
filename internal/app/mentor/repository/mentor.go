@@ -8,6 +8,8 @@ import (
 
 type MentorMySQLItf interface {
 	FindByPreferensi(preferensi string) ([]entity.Mentor, error)
+	FindByUsername(username string) (entity.Mentor, error)
+	GetAllMentors() ([]entity.Mentor, error)
 }
 
 type MentorMySQL struct {
@@ -24,21 +26,17 @@ func (r MentorMySQL) FindByPreferensi(preferensi string) ([]entity.Mentor, error
 	return mentors, err
 }
 
-// func (r *MentorMySQL) GetMentorsByPreferensi() ([]entity.Mentor, error){
-//     var mentors []entity.Mentor
-//     err := r.db.Table("mentors").Select("mentors.mentor_id, mentors.nama, mentors.preferensi").Joins("LEFT JOIN users ON mentors.preferensi = users.preferensi").Scan(&mentors).Error
+func (r MentorMySQL) FindByUsername(username string) (entity.Mentor, error) {
+	var mentors entity.Mentor
+	err := r.db.Where("username = ?", username).Find(&mentors).Error
+	return mentors, err
+}
 
-//     if err != nil {
-//         return nil, err
-//     }
-//     return mentors, nil
-// }
-
-// func (r *MentorMySQL) GetMentorsByUserPreferensi(userPreferensi string) ([]entity.Mentor, error){
-//     var mentors []entity.Mentor
-//     err := r.db.Where("preferensi = ?", userPreferensi).Find(&mentors).Error
-//     if err != nil {
-//         return nil, err
-//     }
-//     return mentors, nil
-// }
+func (r MentorMySQL) GetAllMentors() ([]entity.Mentor, error) {
+	var mentors []entity.Mentor
+	err := r.db.Find(&mentors).Error
+	if err != nil {
+		return nil, err
+	}
+	return mentors, nil
+}
