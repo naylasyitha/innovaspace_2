@@ -9,12 +9,13 @@ type CreateThreadRequest struct {
 }
 
 type UpdateThreadRequest struct {
-	Kategori string `json:"kategori"`
-	Isi      string `json:"isi"`
+	UserId   uuid.UUID `json:"user_id"`
+	Kategori string    `json:"kategori"`
+	Isi      string    `json:"isi"`
 }
 
 type ThreadResponse struct {
-	ThreadId uuid.UUID `json:"id"`
+	ThreadId uuid.UUID `json:"thread_id"`
 	UserId   uuid.UUID `json:"user_id"`
 	Kategori string    `json:"kategori"`
 	Isi      string    `json:"isi"`

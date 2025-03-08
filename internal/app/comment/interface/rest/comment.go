@@ -3,7 +3,8 @@ package rest
 import (
 	"innovaspace/internal/app/comment/usecase"
 	"innovaspace/internal/domain/dto"
-	"innovaspace/internal/middleware"
+
+	// "innovaspace/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -12,20 +13,20 @@ import (
 
 type CommentHandler struct {
 	CommentUsecase usecase.CommentUsecaseItf
-	validator      middleware.MiddlewareItf
+	// validator      middleware.MiddlewareItf
 }
 
-func NewCommentHandler(routerGroup fiber.Router, commentUsecase usecase.CommentUsecaseItf, authMiddleware middleware.MiddlewareItf) {
+func NewCommentHandler(routerGroup fiber.Router, commentUsecase usecase.CommentUsecaseItf) {
 	CommentHandler := CommentHandler{
 		CommentUsecase: commentUsecase,
-		validator:      authMiddleware,
+		// validator:      authMiddleware,
 	}
 
 	routerGroup = routerGroup.Group("/comments")
-	routerGroup.Post("/create-comment", authMiddleware.Authentication, CommentHandler.CreateComment)
+	routerGroup.Post("/create-comment", CommentHandler.CreateComment)
 	routerGroup.Get("/get-comments/:threadId", CommentHandler.GetCommentsByThread)
-	routerGroup.Patch("/update-comment:threadId", authMiddleware.Authentication, CommentHandler.UpdateComment)
-	routerGroup.Delete("/delete-comment:threadId", authMiddleware.Authentication, CommentHandler.DeleteComment)
+	routerGroup.Patch("/update-comment:threadId", CommentHandler.UpdateComment)
+	routerGroup.Delete("/delete-comment:threadId", CommentHandler.DeleteComment)
 }
 
 func (h *CommentHandler) CreateComment(ctx *fiber.Ctx) error {
@@ -47,7 +48,7 @@ func (h *CommentHandler) CreateComment(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h CommentHandler) GetCommentsByThread(ctx *fiber.Ctx) error {
+func (h *CommentHandler) GetCommentsByThread(ctx *fiber.Ctx) error {
 	threadId, err := uuid.Parse(ctx.Params("threadId"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -65,7 +66,7 @@ func (h CommentHandler) GetCommentsByThread(ctx *fiber.Ctx) error {
 	return ctx.JSON(comments)
 }
 
-func (h CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
+func (h *CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(uuid.UUID)
 	commentId, err := uuid.Parse(ctx.Params("commentId"))
 	if err != nil {
@@ -93,7 +94,7 @@ func (h CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
 	return ctx.JSON(updatedComment)
 }
 
-func (h CommentHandler) DeleteComment(ctx *fiber.Ctx) error {
+func (h *CommentHandler) DeleteComment(ctx *fiber.Ctx) error {
 	userId := ctx.Locals("userId").(uuid.UUID)
 	commentId, err := uuid.Parse(ctx.Params("commentId"))
 	if err != nil {

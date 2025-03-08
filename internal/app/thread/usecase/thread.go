@@ -13,7 +13,7 @@ import (
 type ThreadUsecaseItf interface {
 	CreateThread(input dto.CreateThreadRequest) (dto.ThreadResponse, error)
 	GetAllThreads() ([]dto.ThreadResponse, error)
-	UpdateThread(threadId uuid.UUID, userId uuid.UUID, input dto.UpdateThreadRequest) error
+	UpdateThread(threadId uuid.UUID, input dto.UpdateThreadRequest) error
 	DeleteThread(threadId uuid.UUID, userId uuid.UUID) error
 }
 
@@ -66,13 +66,13 @@ func (u ThreadUsecase) GetAllThreads() ([]dto.ThreadResponse, error) {
 	return response, nil
 }
 
-func (u ThreadUsecase) UpdateThread(threadId uuid.UUID, userId uuid.UUID, input dto.UpdateThreadRequest) error {
+func (u ThreadUsecase) UpdateThread(threadId uuid.UUID, input dto.UpdateThreadRequest) error {
 	thread, err := u.threadRepo.GetThreadById(threadId)
 	if err != nil {
 		return errors.New("thread not found")
 	}
 
-	if thread.UserId != userId {
+	if thread.UserId != input.UserId {
 		return errors.New("not allowed to update")
 	}
 

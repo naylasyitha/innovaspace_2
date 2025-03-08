@@ -20,9 +20,9 @@ func NewThreadHandler(routerGroup fiber.Router, threadUsecase usecase.ThreadUsec
 
 	routerGroup = routerGroup.Group("/threads")
 	routerGroup.Post("/create-thread/", ThreadHandler.CreateThread)
-	routerGroup.Get("/", ThreadHandler.GetAllThreads)
-	routerGroup.Patch("/:id", ThreadHandler.UpdateThread)
-	routerGroup.Delete("/:id", ThreadHandler.DeleteThread)
+	routerGroup.Get("/show-all-thread/", ThreadHandler.GetAllThreads)
+	routerGroup.Patch("/update-thread/:thread_id", ThreadHandler.UpdateThread)
+	routerGroup.Delete("/delete-thread/:thread_id", ThreadHandler.DeleteThread)
 }
 
 func (h *ThreadHandler) CreateThread(ctx *fiber.Ctx) error {
@@ -58,14 +58,11 @@ func (h ThreadHandler) GetAllThreads(ctx *fiber.Ctx) error {
 }
 
 func (h ThreadHandler) UpdateThread(ctx *fiber.Ctx) error {
-	threadId, err := uuid.Parse(ctx.Params("id"))
+	threadId, err := uuid.Parse(ctx.Params("thread_id"))
+	// fmt.Println(threadId)
+	// fmt.Println(err)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid thread ID"})
-	}
-
-	userId, err := uuid.Parse(ctx.Locals("userId").(string))
-	if err != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 	}
 
 	var input dto.UpdateThreadRequest
@@ -74,11 +71,24 @@ func (h ThreadHandler) UpdateThread(ctx *fiber.Ctx) error {
 			"error": "Invalid input",
 		})
 	}
-	err = h.threadUsecase.UpdateThread(threadId, userId, input)
+
+	// userId, err := input.UserId.Value()
+	// if err != nil {
+	// 	return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	// }
+
+	// err = h.threadUsecase.UpdateThread(threadId, userId, input)
+	err = h.threadUsecase.UpdateThread(threadId, input)
 	if err != nil {
+		if err.Error() == "Unauthorized" {
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "unauthorized"})
+		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to update thread",
+			"error": err.Error(),
 		})
+		// return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 	"error": "Failed to update thread",
+		// })
 	}
 
 	return ctx.JSON(fiber.Map{
