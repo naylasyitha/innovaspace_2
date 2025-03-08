@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	// "gorm.io/gorm"
 )
 
 type User struct {
-	UserId       uuid.UUID `json:"id" gorm:"type:uuid;primaryKey"`
+	UserId       uuid.UUID `json:"user_id" gorm:"type:char(36);primaryKey"`
+	MentorID     uuid.UUID `json:"mentor_id" gorm:"type:char(36);not null;index"`
 	Email        string    `json:"email" gorm:"type:varchar(255);unique"`
 	Username     string    `json:"username" gorm:"type:varchar(255);unique"`
 	Password     string    `json:"password" gorm:"type:varchar(255)"`
@@ -22,4 +22,6 @@ type User struct {
 	HasMentor    bool      `json:"has_mentor" gorm:"type:boolean;default:false"`
 	CreatedDate  time.Time `json:"created_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
 	ModifiedDate time.Time `json:"modified_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
+
+	// Mentor *Mentor `gorm:"foreignKey:MentorID;references:MentorID"`
 }

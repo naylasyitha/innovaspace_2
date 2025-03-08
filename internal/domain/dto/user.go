@@ -35,3 +35,7 @@ type GetProfile struct {
 	Preferensi string `json:"preferensi" validate:"required"`
 	Institusi  string `json:"institusi" validate:"required"`
 }
+
+type SetMentor struct {
+	MentorId uuid.UUID `json:"mentorId"`
+}

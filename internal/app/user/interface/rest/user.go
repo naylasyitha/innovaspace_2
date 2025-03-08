@@ -3,6 +3,7 @@ package rest
 import (
 	"innovaspace/internal/app/user/usecase"
 	"innovaspace/internal/domain/dto"
+	"innovaspace/internal/middleware"
 	"innovaspace/internal/validation"
 	"log"
 	"net/http"
@@ -12,21 +13,25 @@ import (
 )
 
 type UserHandler struct {
-	usecase   usecase.UserUsecaseItf
-	validator validation.InputValidation
+	usecase    usecase.UserUsecaseItf
+	validator  validation.InputValidation
+	middleware middleware.MiddlewareItf
 }
 
-func NewUserHandler(routerGroup fiber.Router, userUsecase usecase.UserUsecaseItf, Validator validation.InputValidation) {
+func NewUserHandler(routerGroup fiber.Router, userUsecase usecase.UserUsecaseItf, Validator validation.InputValidation, middleware middleware.MiddlewareItf) {
 	userHandler := UserHandler{
-		usecase:   userUsecase,
-		validator: Validator,
+		usecase:    userUsecase,
+		validator:  Validator,
+		middleware: middleware,
 	}
 
 	routerGroup = routerGroup.Group("/users")
 	routerGroup.Post("/register", userHandler.Register)
 	routerGroup.Post("/login", userHandler.Login)
-	routerGroup.Post("/get-profile", userHandler.GetProfileByUsername)
-	routerGroup.Patch("/update/:id", userHandler.Update)
+	routerGroup.Get("/get-profile", userHandler.GetProfileByUsername)
+	routerGroup.Patch("/update/:user_id", userHandler.Update)
+	routerGroup.Patch("/set-mentor/:user_id", userHandler.SetMentor)
+	routerGroup.Patch("/update-mentor/:user_id", userHandler.UpdateMentor)
 }
 
 func (h *UserHandler) Register(ctx *fiber.Ctx) error {
@@ -39,8 +44,6 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	file, _ := ctx.FormFile("profile_picture")
-
 	if err := h.validator.Validate(register); err != nil {
 		log.Printf("Validation error: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -48,7 +51,7 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.usecase.Register(register, file)
+	err := h.usecase.Register(register)
 	if err != nil {
 		return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -70,7 +73,9 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 
 	token, err := h.usecase.Login(login)
 	if err != nil {
-		return err
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 
 	}
 
@@ -125,5 +130,62 @@ func (h *UserHandler) Update(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "User updated successfully",
+	})
+}
+
+func (h *UserHandler) SetMentor(ctx *fiber.Ctx) error {
+	userId, err := uuid.Parse(ctx.Params("user_id"))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID",
+		})
+	}
+
+	var request dto.SetMentor
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	err = h.usecase.SetMentor(userId, request)
+	if err != nil {
+		if err.Error() == "user has mentor" {
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User already has mentor"})
+		}
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "mentor set succesfully",
+	})
+}
+
+func (h *UserHandler) UpdateMentor(ctx *fiber.Ctx) error {
+	userId, err := uuid.Parse(ctx.Params("user_id"))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID",
+		})
+	}
+
+	var request dto.SetMentor
+	if err := ctx.BodyParser(&request); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
+	}
+
+	err = h.usecase.UpdateMentor(userId, request)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Mentor updated succesfulyy",
 	})
 }

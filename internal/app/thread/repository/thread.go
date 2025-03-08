@@ -29,7 +29,8 @@ func (r ThreadMySQL) CreateThread(thread entity.Thread) error {
 
 func (r ThreadMySQL) GetAllThreads() ([]entity.Thread, error) {
 	var threads []entity.Thread
-	err := r.db.Find(&threads).Error
+	// err := r.db.Find(&threads).Error
+	err := r.db.Preload("User").Find(&threads).Error
 	return threads, err
 }
 

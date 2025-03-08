@@ -2,23 +2,25 @@ package usecase
 
 import (
 	"errors"
+	"fmt"
 	"innovaspace/internal/app/user/repository"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/domain/entity"
 	"innovaspace/internal/infra/jwt"
 	"innovaspace/internal/infra/storage"
 	"innovaspace/internal/validation"
-	"mime/multipart"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecaseItf interface {
-	Register(register dto.Register, file *multipart.FileHeader) error
+	Register(register dto.Register) error
 	Login(login dto.Login) (string, error)
 	UpdateUser(userId uuid.UUID, updateData dto.GetProfile) error
 	GetProfileByUsername(username string) (dto.GetProfile, error)
+	SetMentor(userId uuid.UUID, input dto.SetMentor) error
+	UpdateMentor(userId uuid.UUID, input dto.SetMentor) error
 }
 
 type UserUsecase struct {
@@ -36,7 +38,7 @@ func NewUserUsecase(userRepo repository.UserMySQLItf, validator validation.Input
 	}
 }
 
-func (u *UserUsecase) Register(register dto.Register, file *multipart.FileHeader) error {
+func (u *UserUsecase) Register(register dto.Register) error {
 	var user entity.User
 	if err := u.validator.Validate(register); err != nil {
 		return err
@@ -64,14 +66,6 @@ func (u *UserUsecase) Register(register dto.Register, file *multipart.FileHeader
 		Institusi:  register.Institusi,
 		Preferensi: register.Preferensi,
 	}
-
-	// if file != nil {
-	// 	imageUrl, err := storage.NewStorageSupabase().UploadProfilePicture(user.UserId.String(), file)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	user.UserPict = imageUrl
-	// }
 
 	err = u.userRepo.Create(&user)
 
@@ -140,4 +134,41 @@ func (u *UserUsecase) GetProfileByUsername(username string) (dto.GetProfile, err
 		Institusi:  user.Institusi,
 		// UserPict: user.UserPict,
 	}, nil
+}
+
+func (u UserUsecase) SetMentor(userId uuid.UUID, input dto.SetMentor) error {
+	user, err := u.userRepo.FindById(userId)
+	if err != nil {
+		return errors.New("user not found")
+	}
+	fmt.Println(user.MentorID)
+	fmt.Println(input.MentorId)
+	fmt.Println(user.MentorID == uuid.Nil)
+
+	if user.MentorID == uuid.Nil {
+		user.MentorID = input.MentorId
+		err = u.userRepo.Update(user)
+		if err != nil {
+			return fmt.Errorf("failed to update mentor in user: %w", err)
+		}
+	} else {
+		return errors.New("user has mentor")
+	}
+
+	return nil
+}
+
+func (u UserUsecase) UpdateMentor(userId uuid.UUID, input dto.SetMentor) error {
+	user, err := u.userRepo.FindById(userId)
+	if err != nil {
+		return errors.New("user not found")
+	}
+
+	user.MentorID = input.MentorId
+	err = u.userRepo.Update(user)
+	if err != nil {
+		return fmt.Errorf("failed to update mentor in user: %w", err)
+	}
+
+	return nil
 }
