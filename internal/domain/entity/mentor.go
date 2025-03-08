@@ -21,7 +21,7 @@ type Mentor struct {
 	Keahlian        datatypes.JSON `json:"keahlian" gorm:"type:json"`
 	TopikAjar       datatypes.JSON `json:"topik_ajar" gorm:"type:json"`
 	Spesialisasi    string         `json:"spesialisasi" gorm:"type:varchar(255)"`
-	ProfilMentor    string         `json:"profil_mentor" gorm:"type:varchar(255)"`
+	ProfilMentor    string         `json:"profil_mentor" gorm:"type:text"`
 	CreatedDate     time.Time      `json:"created_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
 	ModifiedDate    time.Time      `json:"modified_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 }
