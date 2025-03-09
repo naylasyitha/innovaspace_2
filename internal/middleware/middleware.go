@@ -59,9 +59,9 @@ func (m *Middleware) Authentication(ctx *fiber.Ctx) error {
 
 func CorsMiddleware(app *fiber.App) {
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://innovaspace-intern.vercel.app",
-		AllowCredentials: true,
-		AllowHeaders:     "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With",
-		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+		AllowOrigins:     "*",
+		AllowCredentials: false,
+		AllowHeaders:     "*",
+		AllowMethods:     "*",
 	}))
 }
