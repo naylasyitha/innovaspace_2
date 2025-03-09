@@ -5,10 +5,12 @@ import (
 	"innovaspace/internal/app/mentor/repository"
 	UserRepo "innovaspace/internal/app/user/repository"
 	"innovaspace/internal/domain/dto"
+
+	"github.com/google/uuid"
 )
 
 type MentorUsecaseItf interface {
-	GetMentorDetails(username string) (dto.MentorsDetails, error)
+	GetMentorDetails(id uuid.UUID) (dto.MentorsDetails, error)
 	GetMentorsByPreferensi(preferensi string) ([]dto.Mentor, error)
 	GetAllMentors() ([]dto.Mentor, error)
 }
@@ -25,13 +27,9 @@ func NewMentorUsecase(mentorRepo repository.MentorMySQLItf, userRepo UserRepo.Us
 	}
 }
 
-func (u MentorUsecase) GetMentorDetails(username string) (dto.MentorsDetails, error) {
-	mentor, err := u.mentorRepo.FindByUsername(username)
+func (u MentorUsecase) GetMentorDetails(id uuid.UUID) (dto.MentorsDetails, error) {
+	mentor, err := u.mentorRepo.FindById(id)
 	if err != nil {
-		return dto.MentorsDetails{}, err
-	}
-
-	if mentor.Username == "" {
 		return dto.MentorsDetails{}, errors.New("mentor not found")
 	}
 

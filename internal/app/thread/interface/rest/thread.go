@@ -3,6 +3,7 @@ package rest
 import (
 	"innovaspace/internal/app/thread/usecase"
 	"innovaspace/internal/domain/dto"
+	"innovaspace/internal/middleware"
 	"log"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,31 +12,33 @@ import (
 
 type ThreadHandler struct {
 	threadUsecase usecase.ThreadUsecaseItf
+	middleware    middleware.MiddlewareItf
 }
 
-func NewThreadHandler(routerGroup fiber.Router, threadUsecase usecase.ThreadUsecaseItf) {
+func NewThreadHandler(routerGroup fiber.Router, threadUsecase usecase.ThreadUsecaseItf, middleware middleware.MiddlewareItf) {
 	ThreadHandler := ThreadHandler{
 		threadUsecase: threadUsecase,
+		middleware:    middleware,
 	}
 
 	routerGroup = routerGroup.Group("/threads")
-	routerGroup.Post("/create-thread/", ThreadHandler.CreateThread)
-	routerGroup.Get("/show-all-thread/", ThreadHandler.GetAllThreads)
-	routerGroup.Patch("/update-thread/:thread_id", ThreadHandler.UpdateThread)
-	routerGroup.Delete("/delete-thread/:thread_id", ThreadHandler.DeleteThread)
+	routerGroup.Post("/create-thread", ThreadHandler.middleware.Authentication, ThreadHandler.CreateThread)
+	routerGroup.Get("/show-all-thread", ThreadHandler.middleware.Authentication, ThreadHandler.GetAllThreads)
+	routerGroup.Patch("/update-thread/:id", ThreadHandler.middleware.Authentication, ThreadHandler.UpdateThread)
+	routerGroup.Delete("/delete-thread/:id", ThreadHandler.middleware.Authentication, ThreadHandler.DeleteThread)
 }
 
 func (h *ThreadHandler) CreateThread(ctx *fiber.Ctx) error {
 	var input dto.CreateThreadRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Printf("Error parsing request body: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
 
 	}
 
-	// userId := ctx.Locals("userId").(uuid.UUID)
+	userId := ctx.Locals("userId").(uuid.UUID)
+	input.UserId = userId
 
 	thread, err := h.threadUsecase.CreateThread(input)
 	if err != nil {
@@ -58,12 +61,12 @@ func (h ThreadHandler) GetAllThreads(ctx *fiber.Ctx) error {
 }
 
 func (h ThreadHandler) UpdateThread(ctx *fiber.Ctx) error {
-	threadId, err := uuid.Parse(ctx.Params("thread_id"))
-	// fmt.Println(threadId)
-	// fmt.Println(err)
+	threadId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid thread ID"})
 	}
+
+	// userId := ctx.Locals("userId").(uuid.UUID)
 
 	var input dto.UpdateThreadRequest
 	if err := ctx.BodyParser(&input); err != nil {
@@ -72,12 +75,6 @@ func (h ThreadHandler) UpdateThread(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// userId, err := input.UserId.Value()
-	// if err != nil {
-	// 	return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
-	// }
-
-	// err = h.threadUsecase.UpdateThread(threadId, userId, input)
 	err = h.threadUsecase.UpdateThread(threadId, input)
 	if err != nil {
 		if err.Error() == "Unauthorized" {

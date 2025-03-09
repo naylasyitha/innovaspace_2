@@ -24,20 +24,27 @@ func NewMiddleware(jwt *jwt.JWT) MiddlewareItf {
 }
 
 func (m *Middleware) Authentication(ctx *fiber.Ctx) error {
-	authHeader := ctx.Get("Authorization")
+	authHeader := ctx.GetReqHeaders()["Authorization"]
 
-	if authHeader == "" {
+	if authHeader == nil {
 		ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
 		return nil
 	}
 
-	bearerToken := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if len(authHeader) < 1 {
+		ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "Unauthorized",
+		})
+		return nil
+	}
+
+	bearerToken := authHeader[0]
 	if bearerToken == "" {
 		ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
 		return nil
 	}
 
-	token := bearerToken
+	token := strings.Split(bearerToken, " ")[1]
 	fmt.Println(token)
 
 	id, err := m.jwt.ValidateToken(token)

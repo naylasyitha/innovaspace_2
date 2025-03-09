@@ -5,7 +5,6 @@ import (
 	"innovaspace/internal/app/thread/repository"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/domain/entity"
-	"log"
 
 	"github.com/google/uuid"
 )
@@ -29,7 +28,7 @@ func NewThreadUsecase(threadRepo repository.ThreadMySQLItf) ThreadUsecaseItf {
 
 func (u ThreadUsecase) CreateThread(input dto.CreateThreadRequest) (dto.ThreadResponse, error) {
 	thread := entity.Thread{
-		ThreadId: uuid.New(),
+		Id:       uuid.New(),
 		UserId:   input.UserId,
 		Kategori: input.Kategori,
 		Isi:      input.Isi,
@@ -40,7 +39,7 @@ func (u ThreadUsecase) CreateThread(input dto.CreateThreadRequest) (dto.ThreadRe
 	}
 
 	return dto.ThreadResponse{
-		ThreadId: thread.ThreadId,
+		ThreadId: thread.Id,
 		UserId:   thread.UserId,
 		Kategori: thread.Kategori,
 		Isi:      thread.Isi,
@@ -56,7 +55,7 @@ func (u ThreadUsecase) GetAllThreads() ([]dto.ThreadResponse, error) {
 	var response []dto.ThreadResponse
 	for _, thread := range threads {
 		response = append(response, dto.ThreadResponse{
-			ThreadId: thread.ThreadId,
+			ThreadId: thread.Id,
 			UserId:   thread.UserId,
 			Kategori: thread.Kategori,
 			Isi:      thread.Isi,
@@ -73,18 +72,22 @@ func (u ThreadUsecase) UpdateThread(threadId uuid.UUID, input dto.UpdateThreadRe
 	}
 
 	if thread.UserId != input.UserId {
-		return errors.New("not allowed to update")
+		return errors.New("unauthorized")
 	}
 
-	thread.Kategori = input.Kategori
-	thread.Isi = input.Isi
-
-	if err := u.threadRepo.UpdateThread(thread); err != nil {
-		log.Printf("Error updating thread: %v", err)
-		return err
+	if input.Kategori != "" {
+		thread.Kategori = input.Kategori
+	}
+	if input.Isi != "" {
+		thread.Isi = input.Isi
 	}
 
-	return u.threadRepo.UpdateThread(thread)
+	err = u.threadRepo.UpdateThread(&thread)
+	if err != nil {
+		return errors.New("failed to update thread")
+	}
+
+	return nil
 }
 
 func (u ThreadUsecase) DeleteThread(threadId uuid.UUID, userId uuid.UUID) error {

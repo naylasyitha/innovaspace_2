@@ -36,6 +36,14 @@ type GetProfile struct {
 	Institusi  string `json:"institusi" validate:"required"`
 }
 
+type UpdateProfile struct {
+	Nama       *string `json:"nama"`
+	Username   *string `json:"username"`
+	Email      *string `json:"email" validate:"email"`
+	Preferensi *string `json:"preferensi"`
+	Institusi  *string `json:"institusi"`
+}
+
 type SetMentor struct {
-	MentorId uuid.UUID `json:"mentorId"`
+	MentorId uuid.UUID `json:"mentor_id"`
 }

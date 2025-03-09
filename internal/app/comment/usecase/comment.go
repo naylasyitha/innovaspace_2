@@ -28,9 +28,9 @@ func NewCommentUsecase(commentRepo repository.CommentMySQLItf) CommentUsecaseItf
 
 func (u CommentUsecase) CreateComment(userId uuid.UUID, input dto.CreateCommentRequest) (dto.CommentResponse, error) {
 	comment := entity.Comment{
-		CommentId:   uuid.New(),
-		ThreadID:    input.ThreadId,
-		UserID:      userId,
+		Id:          uuid.New(),
+		ThreadId:    input.ThreadId,
+		UserId:      userId,
 		IsiKomentar: input.IsiKomentar,
 	}
 
@@ -40,9 +40,9 @@ func (u CommentUsecase) CreateComment(userId uuid.UUID, input dto.CreateCommentR
 	}
 
 	return dto.CommentResponse{
-		CommentId:   comment.CommentId,
-		ThreadId:    comment.ThreadID,
-		UserId:      comment.UserID,
+		CommentId:   comment.Id,
+		ThreadId:    comment.ThreadId,
+		UserId:      comment.UserId,
 		IsiKomentar: comment.IsiKomentar,
 	}, nil
 }
@@ -55,9 +55,9 @@ func (u CommentUsecase) GetCommentsByThread(threadId uuid.UUID) ([]dto.CommentRe
 	var response []dto.CommentResponse
 	for _, comment := range comments {
 		response = append(response, dto.CommentResponse{
-			CommentId:   comment.CommentId,
-			ThreadId:    comment.ThreadID,
-			UserId:      comment.UserID,
+			CommentId:   comment.Id,
+			ThreadId:    comment.ThreadId,
+			UserId:      comment.UserId,
 			IsiKomentar: comment.IsiKomentar,
 		})
 	}
@@ -71,7 +71,7 @@ func (u CommentUsecase) UpdateComment(userId uuid.UUID, commentId uuid.UUID, inp
 		return dto.CommentResponse{}, err
 	}
 
-	if comment.UserID != userId {
+	if comment.UserId != userId {
 		return dto.CommentResponse{}, errors.New("unauthorized")
 	}
 
@@ -82,9 +82,9 @@ func (u CommentUsecase) UpdateComment(userId uuid.UUID, commentId uuid.UUID, inp
 	}
 
 	return dto.CommentResponse{
-		CommentId:   comment.CommentId,
-		ThreadId:    comment.ThreadID,
-		UserId:      comment.UserID,
+		CommentId:   comment.Id,
+		ThreadId:    comment.ThreadId,
+		UserId:      comment.UserId,
 		IsiKomentar: comment.IsiKomentar,
 	}, nil
 }
@@ -95,7 +95,7 @@ func (u CommentUsecase) DeleteComment(userId uuid.UUID, commentId uuid.UUID) err
 		return err
 	}
 
-	if comment.UserID != userId {
+	if comment.UserId != userId {
 		return errors.New("unauthorized")
 	}
 

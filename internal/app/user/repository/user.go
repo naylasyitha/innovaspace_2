@@ -12,6 +12,7 @@ type UserMySQLItf interface {
 	Create(user *entity.User) error
 	Update(user *entity.User) error
 	Get(user *entity.User, dto dto.UserParam) error
+	UpdateMentor(user *entity.User) error
 	FindByEmail(email string) (*entity.User, error)
 	FindById(userId uuid.UUID) (*entity.User, error)
 	FindByPreferensi(userId uuid.UUID) (*entity.User, error)
@@ -31,11 +32,34 @@ func (r *UserMySQL) Create(user *entity.User) error {
 }
 
 func (r *UserMySQL) Update(user *entity.User) error {
-	return r.db.Save(user).Error
+	updates := map[string]interface{}{}
+	if user.Nama != "" {
+		updates["nama"] = user.Nama
+	}
+	if user.Username != "" {
+		updates["username"] = user.Username
+	}
+	if user.Email != "" {
+		updates["email"] = user.Email
+	}
+	if user.Preferensi != "" {
+		updates["preferensi"] = user.Preferensi
+	}
+	if user.Institusi != "" {
+		updates["institusi"] = user.Institusi
+	}
+
+	return r.db.Model(user).Where("id = ?", user.Id).Updates(updates).Error
 }
 
 func (r *UserMySQL) Get(user *entity.User, userParam dto.UserParam) error {
 	return r.db.First(user, userParam).Error
+}
+
+func (r *UserMySQL) UpdateMentor(user *entity.User) error {
+	return r.db.Model(user).Where("id = ?", user.Id).Updates(map[string]interface{}{
+		"mentor_id": user.MentorId,
+	}).Error
 }
 
 func (r *UserMySQL) FindByEmail(email string) (*entity.User, error) {
@@ -48,7 +72,7 @@ func (r *UserMySQL) FindByEmail(email string) (*entity.User, error) {
 
 func (r *UserMySQL) FindById(userId uuid.UUID) (*entity.User, error) {
 	var user entity.User
-	err := r.db.First(&user, "user_id = ?", userId).Error
+	err := r.db.First(&user, "id = ?", userId).Error
 	return &user, err
 }
 

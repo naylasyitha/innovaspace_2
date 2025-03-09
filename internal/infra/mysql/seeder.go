@@ -22,7 +22,7 @@ func hashPassword(password string) string {
 func SeedMentors(db *gorm.DB) {
 	mentors := []entity.Mentor{
 		{
-			MentorID:   uuid.New(),
+			Id:         uuid.New(),
 			Email:      "dimas.arya@email.com",
 			Username:   "dimasarya",
 			Password:   hashPassword("DimasMakanSate123"),
@@ -53,7 +53,7 @@ func SeedMentors(db *gorm.DB) {
 			ModifiedDate: time.Now(),
 		},
 		{
-			MentorID:   uuid.New(),
+			Id:         uuid.New(),
 			Email:      "johndoe@email.com",
 			Username:   "johndoe",
 			Password:   hashPassword("JohnDoe123"),

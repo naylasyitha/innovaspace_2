@@ -3,12 +3,13 @@ package repository
 import (
 	"innovaspace/internal/domain/entity"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type MentorMySQLItf interface {
 	FindByPreferensi(preferensi string) ([]entity.Mentor, error)
-	FindByUsername(username string) (entity.Mentor, error)
+	FindById(id uuid.UUID) (*entity.Mentor, error)
 	GetAllMentors() ([]entity.Mentor, error)
 }
 
@@ -26,10 +27,12 @@ func (r MentorMySQL) FindByPreferensi(preferensi string) ([]entity.Mentor, error
 	return mentors, err
 }
 
-func (r MentorMySQL) FindByUsername(username string) (entity.Mentor, error) {
-	var mentors entity.Mentor
-	err := r.db.Where("username = ?", username).Find(&mentors).Error
-	return mentors, err
+func (r MentorMySQL) FindById(id uuid.UUID) (*entity.Mentor, error) {
+	var mentor entity.Mentor
+	if err := r.db.Where("id = ?", id).Find(&mentor).Error; err != nil {
+		return nil, err
+	}
+	return &mentor, nil
 }
 
 func (r MentorMySQL) GetAllMentors() ([]entity.Mentor, error) {

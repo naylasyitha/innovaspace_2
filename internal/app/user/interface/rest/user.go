@@ -7,6 +7,7 @@ import (
 	"innovaspace/internal/validation"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -28,10 +29,10 @@ func NewUserHandler(routerGroup fiber.Router, userUsecase usecase.UserUsecaseItf
 	routerGroup = routerGroup.Group("/users")
 	routerGroup.Post("/register", userHandler.Register)
 	routerGroup.Post("/login", userHandler.Login)
-	routerGroup.Get("/get-profile", userHandler.GetProfileByUsername)
-	routerGroup.Patch("/update/:user_id", userHandler.Update)
-	routerGroup.Patch("/set-mentor/:user_id", userHandler.SetMentor)
-	routerGroup.Patch("/update-mentor/:user_id", userHandler.UpdateMentor)
+	routerGroup.Get("/get-profile/:id", userHandler.middleware.Authentication, userHandler.GetProfile)
+	routerGroup.Patch("/update/:id", userHandler.middleware.Authentication, userHandler.Update)
+	routerGroup.Patch("/set-mentor/:id", userHandler.middleware.Authentication, userHandler.SetMentor)
+	routerGroup.Patch("/update-mentor/:id", userHandler.middleware.Authentication, userHandler.UpdateMentor)
 }
 
 func (h *UserHandler) Register(ctx *fiber.Ctx) error {
@@ -40,26 +41,56 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&register); err != nil {
 		log.Printf("Error parsing request body: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
+			"success": false,
+			"message": "Permintaan tidak valid",
+			"errors":  "Format request tidak sesuai",
 		})
 	}
 
 	if err := h.validator.Validate(register); err != nil {
 		log.Printf("Validation error: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error":   err.Error(),
+			"success": false,
+			"message": "Validasi gagal",
+			"errors":  err.Error(),
 		})
 	}
 
-	err := h.usecase.Register(register)
+	createdUser, err := h.usecase.Register(register)
 	if err != nil {
-		return ctx.Status(400).JSON(fiber.Map{"error": err.Error()})
+		errorMap := fiber.Map{"general": err.Error()}
+		status := fiber.StatusBadRequest
+
+		if strings.Contains(err.Error(), "duplicate") {
+			status = fiber.StatusConflict
+			errorMap = fiber.Map{
+				"email":    "Email sudah terdaftar",
+				"username": "Username sudah digunakan",
+			}
+		}
+
+		return ctx.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": "Registrasi gagal",
+			"errors":  errorMap,
+		})
 	}
 
 	return ctx.Status(http.StatusCreated).JSON(fiber.Map{
-		"message": "success register user",
+		"success": true,
+		"message": "Registrasi berhasil",
+		"data": fiber.Map{
+			"user": fiber.Map{
+				"id":           createdUser.Id,
+				"username":     createdUser.Username,
+				"email":        createdUser.Email,
+				"nama":         createdUser.Nama,
+				"institusi":    createdUser.Institusi,
+				"profile_pict": createdUser.UserPict,
+			},
+		},
 	})
-
 }
 
 func (h *UserHandler) Login(ctx *fiber.Ctx) error {
@@ -85,18 +116,22 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h *UserHandler) GetProfileByUsername(ctx *fiber.Ctx) error {
-	var request struct {
-		Username string `json:"username"`
-	}
-
-	if err := ctx.BodyParser(&request); err != nil {
+func (h *UserHandler) GetProfile(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	if id == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+			"error": "missing ID",
 		})
 	}
 
-	user, err := h.usecase.GetProfileByUsername(request.Username)
+	ParseId, err := uuid.Parse(id)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid ID format",
+		})
+	}
+
+	user, err := h.usecase.GetProfileById(ParseId)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -107,14 +142,14 @@ func (h *UserHandler) GetProfileByUsername(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHandler) Update(ctx *fiber.Ctx) error {
-	userId, err := uuid.Parse(ctx.Params("user_id"))
+	userId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid UUID format",
+			"error": "Invalid ID format",
 		})
 	}
 
-	var request dto.GetProfile
+	var request dto.UpdateProfile
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
@@ -134,7 +169,7 @@ func (h *UserHandler) Update(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHandler) SetMentor(ctx *fiber.Ctx) error {
-	userId, err := uuid.Parse(ctx.Params("user_id"))
+	userId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid ID",
@@ -145,6 +180,12 @@ func (h *UserHandler) SetMentor(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
+		})
+	}
+
+	if request.MentorId == uuid.Nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Mentor ID required",
 		})
 	}
 
@@ -164,7 +205,7 @@ func (h *UserHandler) SetMentor(ctx *fiber.Ctx) error {
 }
 
 func (h *UserHandler) UpdateMentor(ctx *fiber.Ctx) error {
-	userId, err := uuid.Parse(ctx.Params("user_id"))
+	userId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid ID",

@@ -11,7 +11,7 @@ type ThreadMySQLItf interface {
 	CreateThread(thread entity.Thread) error
 	GetAllThreads() ([]entity.Thread, error)
 	GetThreadById(threadId uuid.UUID) (entity.Thread, error)
-	UpdateThread(thread entity.Thread) error
+	UpdateThread(thread *entity.Thread) error
 	DeleteThread(threadId uuid.UUID) error
 }
 
@@ -30,7 +30,6 @@ func (r ThreadMySQL) CreateThread(thread entity.Thread) error {
 func (r ThreadMySQL) GetAllThreads() ([]entity.Thread, error) {
 	var threads []entity.Thread
 	err := r.db.Find(&threads).Error
-	// err := r.db.Preload("User").Find(&threads).Error
 	return threads, err
 }
 
@@ -40,8 +39,16 @@ func (r ThreadMySQL) GetThreadById(threadId uuid.UUID) (entity.Thread, error) {
 	return thread, err
 }
 
-func (r ThreadMySQL) UpdateThread(thread entity.Thread) error {
-	return r.db.Save(thread).Error
+func (r *ThreadMySQL) UpdateThread(thread *entity.Thread) error {
+	updates := map[string]interface{}{}
+	if thread.Kategori != "" {
+		updates["kategori"] = thread.Kategori
+	}
+	if thread.Isi != "" {
+		updates["isi"] = thread.Isi
+	}
+
+	return r.db.Model(thread).Where("id = ?", thread.Id).Updates(updates).Error
 }
 
 func (r ThreadMySQL) DeleteThread(threadId uuid.UUID) error {

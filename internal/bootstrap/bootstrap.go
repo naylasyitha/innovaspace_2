@@ -14,9 +14,11 @@ import (
 	"innovaspace/internal/domain/entity"
 	"innovaspace/internal/infra/env"
 	"innovaspace/internal/infra/fiber"
+	"innovaspace/internal/infra/jwt"
 	Seed "innovaspace/internal/infra/mysql"
 	"innovaspace/internal/infra/storage"
 	"innovaspace/internal/middleware"
+	CORS "innovaspace/internal/middleware"
 	"innovaspace/internal/validation"
 	"log"
 
@@ -46,12 +48,12 @@ func Start() error {
 		panic(err)
 	}
 
-	err = database.AutoMigrate(&entity.User{})
+	err = database.AutoMigrate(&entity.Mentor{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
-	err = database.AutoMigrate(&entity.Mentor{})
+	err = database.AutoMigrate(&entity.User{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
@@ -68,23 +70,25 @@ func Start() error {
 
 	app := fiber.New()
 
-	middleware.CorsMiddleware(app)
+	jwt := jwt.NewJWT()
+	middleware := middleware.NewMiddleware(jwt)
+	CORS.CorsMiddleware(app)
 
 	v1 := app.Group("/api/v1")
 
 	inputValidation := validation.NewInputValidation()
 
 	UserRepository := UserRepository.NewUserMySQL(database)
-	UserUsecase := UserUsecase.NewUserUsecase(UserRepository, *inputValidation, SupabaseStorage)
-	UserHandler.NewUserHandler(v1, UserUsecase, *inputValidation, &middleware.Middleware{})
+	UserUsecase := UserUsecase.NewUserUsecase(UserRepository, *inputValidation, *jwt)
+	UserHandler.NewUserHandler(v1, UserUsecase, *inputValidation, middleware)
 
 	MentorRepository := MentorRepository.NewMentorMySQL(database)
 	MentorUsecase := MentorUsecase.NewMentorUsecase(MentorRepository, UserRepository)
-	MentorHandler.NewMentorHandler(v1, MentorUsecase, UserRepository)
+	MentorHandler.NewMentorHandler(v1, MentorUsecase, UserRepository, middleware)
 
 	ThreadRepository := ThreadRepository.NewThreadMySQL(database)
 	ThreadUsecase := ThreadUsecase.NewThreadUsecase(ThreadRepository)
-	ThreadHandler.NewThreadHandler(v1, ThreadUsecase)
+	ThreadHandler.NewThreadHandler(v1, ThreadUsecase, middleware)
 
 	Seed.SeedMentors(database)
 
