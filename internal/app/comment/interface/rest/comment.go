@@ -75,47 +75,61 @@ func (h *CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
 	fmt.Println("Received ID:", ctx.Params("id"))
 	commentId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid ID",
-		})
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"ID comment tidak valid", "Format ID tidak valid")
 	}
 
 	userId := ctx.Locals("userId").(uuid.UUID)
 	var input dto.UpdateCommentRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"Format request tidak valid", "Format JSON tidak sesuai")
 	}
 
 	// input.UserId = userId
 	updatedComment, err := h.CommentUsecase.UpdateComment(userId, commentId, input)
 	if err != nil {
-		if err.Error() == "unauthorized" {
-			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "You can only update your own comment"})
+		switch err.Error() {
+		case "not allowed to update comment":
+			return errorResponse(ctx, fiber.StatusForbidden,
+				"Comment gagal diperbarui", "Pengguna tidak memiliki akses")
+		case "request not valid":
+			return errorResponse(ctx, fiber.StatusBadRequest,
+				"Comment gagal diperbarui", "Isi komentar wajib diisi")
+		case "comment not found":
+			return errorResponse(ctx, fiber.StatusNotFound,
+				"Comment tidak ditemukan", "")
+		default:
+			return errorResponse(ctx, fiber.StatusInternalServerError,
+				"Comment gagal diperbarui", err.Error())
 		}
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-
 	}
 
-	return ctx.JSON(updatedComment)
+	return successResponse(ctx, fiber.StatusOK, "Berhasil memperbarui data", updatedComment)
 }
 
 func (h *CommentHandler) DeleteComment(ctx *fiber.Ctx) error {
 	commentId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
-		})
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"ID comment tidak valid", "Format ID tidak valid")
 	}
 
 	userId := ctx.Locals("userId").(uuid.UUID)
 	if err := h.CommentUsecase.DeleteComment(userId, commentId); err != nil {
-		if err.Error() == "unauthorized" {
-			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "You can only delete your own comment"})
+		switch err.Error() {
+		case "not allowed to delete comment":
+			return errorResponse(ctx, fiber.StatusForbidden,
+				"Comment gagal dihapus", "Pengguna tidak memiliki akses")
+		case "comment not found":
+			return errorResponse(ctx, fiber.StatusNotFound,
+				"Comment tidak ditemukan", "")
+		default:
+			return errorResponse(ctx, fiber.StatusInternalServerError,
+				"Comment gagal dihapus", err.Error())
 		}
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Comment deleted successfully"})
+	return successResponse(ctx, fiber.StatusOK, "Comment berhasil dihapus",
+		fiber.Map{"id": commentId.String()})
 }

@@ -4,7 +4,6 @@ import (
 	"innovaspace/internal/app/thread/usecase"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/middleware"
-	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -48,10 +47,8 @@ func successResponse(ctx *fiber.Ctx, status int, message string, data interface{
 func (h *ThreadHandler) CreateThread(ctx *fiber.Ctx) error {
 	var input dto.CreateThreadRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
-		})
-
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"Permintaan tidak valid", "Format request tidak sesuai")
 	}
 
 	userId := ctx.Locals("userId").(uuid.UUID)
@@ -59,37 +56,40 @@ func (h *ThreadHandler) CreateThread(ctx *fiber.Ctx) error {
 
 	thread, err := h.threadUsecase.CreateThread(input)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create thread",
-		})
+		return errorResponse(ctx, fiber.StatusInternalServerError,
+			"Gagal membuat thread", err.Error())
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(thread)
+	return successResponse(ctx, fiber.StatusCreated, "Thread berhasil dibuat",
+		fiber.Map{
+			"thread_id": thread.ThreadId,
+			"user_id":   thread.UserId,
+			"kategori":  thread.Kategori,
+			"isi":       thread.Isi,
+		})
 }
 
 func (h ThreadHandler) GetAllThreads(ctx *fiber.Ctx) error {
 	threads, err := h.threadUsecase.GetAllThreads()
 	if err != nil {
-		log.Println("Error fetching threads:", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch threads",
-		})
+		return errorResponse(ctx, fiber.StatusInternalServerError,
+			"Gagal mengambil data", err.Error())
 	}
-	return ctx.JSON(threads)
+	return successResponse(ctx, fiber.StatusOK, "List thread berhasil ditemukan", threads)
 }
 
 func (h ThreadHandler) UpdateThread(ctx *fiber.Ctx) error {
 	threadId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid thread ID"})
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"ID thread tidak valid", "Format ID tidak valid")
 	}
 
 	userId := ctx.Locals("userId").(uuid.UUID)
 
 	var input dto.UpdateThreadRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid input",
-		})
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"Format request tidak valid", "Format JSON tidak sesuai")
 	}
 
 	err = h.threadUsecase.UpdateThread(threadId, userId, input)
@@ -102,30 +102,29 @@ func (h ThreadHandler) UpdateThread(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.JSON(fiber.Map{
-		"message": "Thread updated successfully",
-	})
+	return successResponse(ctx, fiber.StatusOK, "Thread berhasil diperbarui", nil)
 }
 
 func (h ThreadHandler) DeleteThread(ctx *fiber.Ctx) error {
 	threadId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
-		})
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"ID thread tidak valid", "Format ID tidak valid")
 	}
 
 	userId := ctx.Locals("userId").(uuid.UUID)
-
-	err = h.threadUsecase.DeleteThread(threadId, userId)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to delete thread",
-		})
+	if err := h.threadUsecase.DeleteThread(threadId, userId); err != nil {
+		switch err.Error() {
+		case "not allowed to delete thread":
+			return errorResponse(ctx, fiber.StatusForbidden,
+				"Thread gagal dihapus", "Pengguna tidak memiliki akses")
+		default:
+			return errorResponse(ctx, fiber.StatusInternalServerError,
+				"Gagal menghapus thread", err.Error())
+		}
 	}
-	return ctx.JSON(fiber.Map{
-		"message": "Thread deleted successfully",
-	})
+
+	return successResponse(ctx, fiber.StatusOK, "Thread berhasil dihapus", nil)
 }
 
 func (h *ThreadHandler) GetThreadDetails(ctx *fiber.Ctx) error {

@@ -24,7 +24,7 @@ func NewThreadMySQL(db *gorm.DB) ThreadMySQLItf {
 }
 
 func (r ThreadMySQL) CreateThread(thread entity.Thread) error {
-	return r.db.Create(thread).Error
+	return r.db.Create(&thread).Error
 }
 
 func (r ThreadMySQL) GetAllThreads() ([]entity.Thread, error) {

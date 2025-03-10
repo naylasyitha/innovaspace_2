@@ -32,14 +32,18 @@ func (h MentorHandler) GetMentorDetails(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if id == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "missing ID",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Mentor ID wajib diisi",
 		})
 	}
 
 	parsedId, err := uuid.Parse(id)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Format ID tidak valid",
 		})
 	}
 
@@ -47,15 +51,25 @@ func (h MentorHandler) GetMentorDetails(ctx *fiber.Ctx) error {
 	if err != nil {
 		if err.Error() == "mentor not found" {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "Mentor not found",
+				"success": false,
+				"message": "Mentor tidak ditemukan",
+				"errors":  err.Error(),
 			})
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"success": false,
+			"message": "Mentor tidak ditemukan",
+			"errors":  err.Error(),
 		})
 	}
 
-	return ctx.JSON(mentor)
+	return ctx.JSON(fiber.Map{
+		"success": true,
+		"message": "Mentor berhasil ditemukan",
+		"data": fiber.Map{
+			"mentor": mentor,
+		},
+	})
 }
 
 func (h MentorHandler) GetMentorsByUserPreferensi(ctx *fiber.Ctx) error {
@@ -83,11 +97,17 @@ func (h MentorHandler) GetAllMentors(ctx *fiber.Ctx) error {
 	mentors, err := h.mentorUsecase.GetAllMentors()
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to fetch mentors",
+			"success": false,
+			"message": "Mentor tidak ditemukan",
+			"errors":  err.Error(),
 		})
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"mentors": mentors,
+		"success": true,
+		"message": "Mentor berhasil ditemukan",
+		"data": fiber.Map{
+			"mentor": mentors,
+		},
 	})
 }

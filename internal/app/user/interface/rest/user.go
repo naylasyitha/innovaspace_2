@@ -35,6 +35,21 @@ func NewUserHandler(routerGroup fiber.Router, userUsecase usecase.UserUsecaseItf
 	routerGroup.Patch("/update-mentor/:id", userHandler.middleware.Authentication, userHandler.UpdateMentor)
 }
 
+func errorResponse(ctx *fiber.Ctx, status int, message string, errors interface{}) error {
+	return ctx.Status(status).JSON(fiber.Map{
+		"success": false,
+		"message": message,
+		"errors":  errors,
+	})
+}
+
+func successResponse(ctx *fiber.Ctx, data interface{}) error {
+	return ctx.JSON(fiber.Map{
+		"success": true,
+		"data":    data,
+	})
+}
+
 func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 	var register dto.Register
 
@@ -65,7 +80,12 @@ func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 		if strings.Contains(err.Error(), "duplicate") {
 			status = fiber.StatusConflict
 			errorMap = fiber.Map{
-				"email":    "Email sudah terdaftar",
+				"email": "Email sudah terdaftar",
+			}
+		}
+		if strings.Contains(err.Error(), "username already exists") {
+			status = fiber.StatusConflict
+			errorMap = fiber.Map{
 				"username": "Username sudah digunakan",
 			}
 		}
@@ -98,21 +118,31 @@ func (h *UserHandler) Login(ctx *fiber.Ctx) error {
 
 	if err := ctx.BodyParser(&login); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid request body",
+			"success": false,
+			"message": "Permintaan tidak valid",
+			"errors":  "Format request tidak sesuai",
 		})
 	}
 
 	token, err := h.usecase.Login(login)
 	if err != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		status := fiber.StatusInternalServerError
+		message := "Terjadi kesalahan sistem"
+		errors := "Silakan coba beberapa saat lagi"
 
+		return ctx.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": message,
+			"errors":  errors,
+		})
 	}
 
 	return ctx.Status(http.StatusOK).JSON(fiber.Map{
-		"message": "success login user",
-		"token":   token,
+		"success": true,
+		"message": "Login berhasil",
+		"data": fiber.Map{
+			"token": token,
+		},
 	})
 }
 
@@ -120,51 +150,71 @@ func (h *UserHandler) GetProfile(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if id == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "missing ID",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "ID wajib diisi",
 		})
 	}
 
 	ParseId, err := uuid.Parse(id)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID format",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Format ID tidak valid",
 		})
 	}
 
 	user, err := h.usecase.GetProfileById(ParseId)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"success": false,
+			"message": "Profil tidak ditemukan",
+			"errors":  err.Error(),
 		})
 	}
 
-	return ctx.JSON(user)
+	return ctx.JSON(fiber.Map{
+		"success": true,
+		"message": "Profil berhasil ditemukan",
+		"data": fiber.Map{
+			"profile": user,
+		},
+	})
 }
 
 func (h *UserHandler) Update(ctx *fiber.Ctx) error {
 	userId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID format",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Format ID tidak valid",
 		})
 	}
 
 	var request dto.UpdateProfile
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+			"success": false,
+			"message": "Permintaan tidak valid",
+			"errors":  "Format request tidak sesuai",
 		})
 	}
 
 	err = h.usecase.UpdateUser(userId, request)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"success": false,
+			"message": "Gagal memperbarui data",
+			"errors":  err.Error(),
 		})
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "User updated successfully",
+		"success": true,
+		"message": "Data pengguna berhasil diperbarui",
+		"data":    fiber.Map{},
 	})
 }
 
@@ -172,35 +222,52 @@ func (h *UserHandler) SetMentor(ctx *fiber.Ctx) error {
 	userId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Format ID tidak valid",
 		})
 	}
 
 	var request dto.SetMentor
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+			"success": false,
+			"message": "Permintaan tidak valid",
+			"errors":  "Format request tidak sesuai",
 		})
 	}
 
 	if request.MentorId == uuid.Nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Mentor ID required",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Mentor ID wajib diisi",
 		})
 	}
 
 	err = h.usecase.SetMentor(userId, request)
 	if err != nil {
+		status := fiber.StatusInternalServerError
+		message := "Gagal menetapkan mentor"
+		errors := fiber.Map{"general": err.Error()}
+
 		if err.Error() == "user has mentor" {
-			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "User already has mentor"})
+			status = fiber.StatusConflict
+			message = "Pengguna sudah memiliki mentor"
+			errors = fiber.Map{"mentor": "Tidak bisa menetapkan mentor baru"}
 		}
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+
+		return ctx.Status(status).JSON(fiber.Map{
+			"success": false,
+			"message": message,
+			"errors":  errors,
 		})
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "mentor set succesfully",
+		"success": true,
+		"message": "Mentor berhasil ditambahkan",
+		"data":    fiber.Map{},
 	})
 }
 
@@ -208,25 +275,41 @@ func (h *UserHandler) UpdateMentor(ctx *fiber.Ctx) error {
 	userId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Format ID tidak valid",
 		})
 	}
 
 	var request dto.SetMentor
 	if err := ctx.BodyParser(&request); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
+			"success": false,
+			"message": "Permintaan tidak valid",
+			"errors":  "Format request tidak sesuai",
+		})
+	}
+
+	if request.MentorId == uuid.Nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Parameter tidak valid",
+			"errors":  "Mentor ID wajib diisi",
 		})
 	}
 
 	err = h.usecase.UpdateMentor(userId, request)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"success": false,
+			"message": "Gagal memperbarui mentor",
+			"errors":  err.Error(),
 		})
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Mentor updated succesfulyy",
+		"success": true,
+		"message": "Mentor berhasil diperbarui",
+		"data":    fiber.Map{},
 	})
 }
