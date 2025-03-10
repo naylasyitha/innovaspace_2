@@ -1,10 +1,13 @@
 package dto
 
+import "github.com/google/uuid"
+
 type Mentor struct {
-	Email        string `json:"email" validate:"required,email"`
-	Nama         string `json:"nama" validate:"required"`
-	Spesialisasi string `json:"spesialisasi" validate:"required"`
-	ProfilMentor string `json:"profil_mentor" validate:"required"`
+	Id           uuid.UUID `json:"mentor_id"`
+	Email        string    `json:"email" validate:"required,email"`
+	Nama         string    `json:"nama" validate:"required"`
+	Spesialisasi string    `json:"spesialisasi" validate:"required"`
+	ProfilMentor string    `json:"profil_mentor" validate:"required"`
 }
 
 type MentorsDetails struct {

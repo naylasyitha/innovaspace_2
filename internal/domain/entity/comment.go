@@ -7,7 +7,7 @@ import (
 )
 
 type Comment struct {
-	Id           uuid.UUID `json:"comment_id" gorm:"type:char(36);primaryKey"`
+	Id           uuid.UUID `json:"id" gorm:"type:char(36);primaryKey"`
 	ThreadId     uuid.UUID `json:"thread_id" gorm:"type:char(36);not null;index"`
 	UserId       uuid.UUID `json:"user_id" gorm:"type:char(36);not null;index"`
 	IsiKomentar  string    `json:"isi_komentar" gorm:"type:text"`

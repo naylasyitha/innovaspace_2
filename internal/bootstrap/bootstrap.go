@@ -2,6 +2,9 @@ package bootstrap
 
 import (
 	"fmt"
+	CommentHandler "innovaspace/internal/app/comment/interface/rest"
+	CommentRepository "innovaspace/internal/app/comment/repository"
+	CommentUsecase "innovaspace/internal/app/comment/usecase"
 	MentorHandler "innovaspace/internal/app/mentor/interface/rest"
 	MentorRepository "innovaspace/internal/app/mentor/repository"
 	MentorUsecase "innovaspace/internal/app/mentor/usecase"
@@ -86,8 +89,12 @@ func Start() error {
 	MentorUsecase := MentorUsecase.NewMentorUsecase(MentorRepository, UserRepository)
 	MentorHandler.NewMentorHandler(v1, MentorUsecase, UserRepository, middleware)
 
+	CommentRepository := CommentRepository.NewCommentMySQL(database)
+	CommentUsecase := CommentUsecase.NewCommentUsecase(CommentRepository)
+	CommentHandler.NewCommentHandler(v1, CommentUsecase, middleware)
+
 	ThreadRepository := ThreadRepository.NewThreadMySQL(database)
-	ThreadUsecase := ThreadUsecase.NewThreadUsecase(ThreadRepository)
+	ThreadUsecase := ThreadUsecase.NewThreadUsecase(ThreadRepository, CommentRepository)
 	ThreadHandler.NewThreadHandler(v1, ThreadUsecase, middleware)
 
 	Seed.SeedMentors(database)

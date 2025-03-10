@@ -10,8 +10,7 @@ import (
 )
 
 type CommentUsecaseItf interface {
-	CreateComment(userId uuid.UUID, input dto.CreateCommentRequest) (dto.CommentResponse, error)
-	GetCommentsByThread(threadId uuid.UUID) ([]dto.CommentResponse, error)
+	CreateComment(input dto.CreateCommentRequest) (dto.CommentResponse, error)
 	UpdateComment(userId uuid.UUID, commentId uuid.UUID, input dto.UpdateCommentRequest) (dto.CommentResponse, error)
 	DeleteComment(userId uuid.UUID, commentId uuid.UUID) error
 }
@@ -26,11 +25,11 @@ func NewCommentUsecase(commentRepo repository.CommentMySQLItf) CommentUsecaseItf
 	}
 }
 
-func (u CommentUsecase) CreateComment(userId uuid.UUID, input dto.CreateCommentRequest) (dto.CommentResponse, error) {
+func (u CommentUsecase) CreateComment(input dto.CreateCommentRequest) (dto.CommentResponse, error) {
 	comment := entity.Comment{
 		Id:          uuid.New(),
 		ThreadId:    input.ThreadId,
-		UserId:      userId,
+		UserId:      input.UserId,
 		IsiKomentar: input.IsiKomentar,
 	}
 
@@ -47,24 +46,6 @@ func (u CommentUsecase) CreateComment(userId uuid.UUID, input dto.CreateCommentR
 	}, nil
 }
 
-func (u CommentUsecase) GetCommentsByThread(threadId uuid.UUID) ([]dto.CommentResponse, error) {
-	comments, err := u.commentRepo.GetCommentsByThreadId(threadId)
-	if err != nil {
-		return nil, err
-	}
-	var response []dto.CommentResponse
-	for _, comment := range comments {
-		response = append(response, dto.CommentResponse{
-			CommentId:   comment.Id,
-			ThreadId:    comment.ThreadId,
-			UserId:      comment.UserId,
-			IsiKomentar: comment.IsiKomentar,
-		})
-	}
-
-	return response, nil
-}
-
 func (u CommentUsecase) UpdateComment(userId uuid.UUID, commentId uuid.UUID, input dto.UpdateCommentRequest) (dto.CommentResponse, error) {
 	comment, err := u.commentRepo.GetCommentById(commentId)
 	if err != nil {
@@ -75,28 +56,33 @@ func (u CommentUsecase) UpdateComment(userId uuid.UUID, commentId uuid.UUID, inp
 		return dto.CommentResponse{}, errors.New("unauthorized")
 	}
 
-	comment.IsiKomentar = input.IsiKomentar
+	if input.IsiKomentar != "" {
+		comment.IsiKomentar = input.IsiKomentar
+	} else {
+		return dto.CommentResponse{}, errors.New("comment required")
+	}
+
 	err = u.commentRepo.UpdateComment(comment)
 	if err != nil {
-		return dto.CommentResponse{}, err
+		return dto.CommentResponse{}, errors.New("failed to update comment")
 	}
 
 	return dto.CommentResponse{
 		CommentId:   comment.Id,
-		ThreadId:    comment.ThreadId,
-		UserId:      comment.UserId,
 		IsiKomentar: comment.IsiKomentar,
+		UserId:      comment.UserId,
+		ThreadId:    comment.ThreadId,
 	}, nil
 }
 
 func (u CommentUsecase) DeleteComment(userId uuid.UUID, commentId uuid.UUID) error {
 	comment, err := u.commentRepo.GetCommentById(commentId)
 	if err != nil {
-		return err
+		return errors.New("comment not found")
 	}
 
 	if comment.UserId != userId {
-		return errors.New("unauthorized")
+		return errors.New("not allowed to delete comment")
 	}
 
 	return u.commentRepo.DeleteComment(commentId)

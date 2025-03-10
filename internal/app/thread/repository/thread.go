@@ -35,7 +35,7 @@ func (r ThreadMySQL) GetAllThreads() ([]entity.Thread, error) {
 
 func (r ThreadMySQL) GetThreadById(threadId uuid.UUID) (entity.Thread, error) {
 	var thread entity.Thread
-	err := r.db.First(&thread, "thread_id = ?", threadId).Error
+	err := r.db.First(&thread, "Id = ?", threadId).Error
 	return thread, err
 }
 
@@ -52,5 +52,5 @@ func (r *ThreadMySQL) UpdateThread(thread *entity.Thread) error {
 }
 
 func (r ThreadMySQL) DeleteThread(threadId uuid.UUID) error {
-	return r.db.Delete(entity.Thread{}, "thread_id = ?", threadId).Error
+	return r.db.Delete(entity.Thread{}, "id = ?", threadId).Error
 }

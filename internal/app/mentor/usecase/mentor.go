@@ -75,6 +75,7 @@ func (u MentorUsecase) GetAllMentors() ([]dto.Mentor, error) {
 	var response []dto.Mentor
 	for _, mentor := range mentors {
 		response = append(response, dto.Mentor{
+			Id:           mentor.Id,
 			Nama:         mentor.Nama,
 			Spesialisasi: mentor.Spesialisasi,
 			Email:        mentor.Email,

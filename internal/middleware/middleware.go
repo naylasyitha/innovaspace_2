@@ -27,7 +27,13 @@ func (m *Middleware) Authentication(ctx *fiber.Ctx) error {
 	authHeader := ctx.GetReqHeaders()["Authorization"]
 
 	if authHeader == nil {
-		ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"message": "Unauthorized"})
+		ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"success": false,
+			"message": "Autentikasi gagal",
+			"errors": fiber.Map{
+				"auth": "Anda belum login",
+			},
+		})
 		return nil
 	}
 

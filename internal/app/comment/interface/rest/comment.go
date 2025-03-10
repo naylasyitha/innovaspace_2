@@ -1,10 +1,10 @@
 package rest
 
 import (
+	"fmt"
 	"innovaspace/internal/app/comment/usecase"
 	"innovaspace/internal/domain/dto"
-
-	// "innovaspace/internal/middleware"
+	"innovaspace/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -13,68 +13,74 @@ import (
 
 type CommentHandler struct {
 	CommentUsecase usecase.CommentUsecaseItf
-	// validator      middleware.MiddlewareItf
+	middleware     middleware.MiddlewareItf
 }
 
-func NewCommentHandler(routerGroup fiber.Router, commentUsecase usecase.CommentUsecaseItf) {
+func NewCommentHandler(routerGroup fiber.Router, commentUsecase usecase.CommentUsecaseItf, middleware middleware.MiddlewareItf) {
 	CommentHandler := CommentHandler{
 		CommentUsecase: commentUsecase,
-		// validator:      authMiddleware,
+		middleware:     middleware,
 	}
 
 	routerGroup = routerGroup.Group("/comments")
-	routerGroup.Post("/create-comment", CommentHandler.CreateComment)
-	routerGroup.Get("/get-comments/:threadId", CommentHandler.GetCommentsByThread)
-	routerGroup.Patch("/update-comment:threadId", CommentHandler.UpdateComment)
-	routerGroup.Delete("/delete-comment:threadId", CommentHandler.DeleteComment)
+	routerGroup.Post("/create-comment", CommentHandler.middleware.Authentication, CommentHandler.CreateComment)
+	routerGroup.Patch("/update-comment/:id", CommentHandler.middleware.Authentication, CommentHandler.UpdateComment)
+	routerGroup.Delete("/delete-comment/:id", CommentHandler.middleware.Authentication, CommentHandler.DeleteComment)
 }
 
-func (h *CommentHandler) CreateComment(ctx *fiber.Ctx) error {
-	userId := ctx.Locals("userId").(uuid.UUID)
-
-	var input dto.CreateCommentRequest
-	if err := ctx.BodyParser(&input); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
-	}
-
-	comment, err := h.CommentUsecase.CreateComment(userId, input)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create comment"})
-	}
-
-	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Comment created successfully",
-		"data":    comment,
+func errorResponse(ctx *fiber.Ctx, status int, message, detail string) error {
+	return ctx.Status(status).JSON(fiber.Map{
+		"success": false,
+		"message": message,
+		"errors":  detail,
 	})
 }
 
-func (h *CommentHandler) GetCommentsByThread(ctx *fiber.Ctx) error {
-	threadId, err := uuid.Parse(ctx.Params("threadId"))
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid ID",
-		})
+func successResponse(ctx *fiber.Ctx, status int, message string, data interface{}) error {
+	return ctx.Status(status).JSON(fiber.Map{
+		"success": true,
+		"message": message,
+		"data":    data,
+	})
+}
+
+func (h *CommentHandler) CreateComment(ctx *fiber.Ctx) error {
+	var input dto.CreateCommentRequest
+	if err := ctx.BodyParser(&input); err != nil {
+		return errorResponse(ctx, fiber.StatusBadRequest,
+			"Permintaan tidak valid", "Format request tidak sesuai")
 	}
 
-	comments, err := h.CommentUsecase.GetCommentsByThread(threadId)
+	userId := ctx.Locals("userId").(uuid.UUID)
+	input.UserId = userId
+
+	comment, err := h.CommentUsecase.CreateComment(input)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return errorResponse(ctx, fiber.StatusInternalServerError,
+			"Gagal membuat comment", err.Error())
 	}
 
-	return ctx.JSON(comments)
+	return successResponse(ctx, fiber.StatusCreated, "Comment berhasil dibuat",
+		fiber.Map{
+			"comment": fiber.Map{
+				"comment_id":   comment.CommentId,
+				"thread_id":    comment.ThreadId,
+				"user_id":      comment.UserId,
+				"isi_komentar": comment.IsiKomentar,
+			},
+		})
 }
 
 func (h *CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
-	userId := ctx.Locals("userId").(uuid.UUID)
-	commentId, err := uuid.Parse(ctx.Params("commentId"))
+	fmt.Println("Received ID:", ctx.Params("id"))
+	commentId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid ID",
 		})
 	}
 
+	userId := ctx.Locals("userId").(uuid.UUID)
 	var input dto.UpdateCommentRequest
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -82,6 +88,7 @@ func (h *CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// input.UserId = userId
 	updatedComment, err := h.CommentUsecase.UpdateComment(userId, commentId, input)
 	if err != nil {
 		if err.Error() == "unauthorized" {
@@ -95,14 +102,14 @@ func (h *CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
 }
 
 func (h *CommentHandler) DeleteComment(ctx *fiber.Ctx) error {
-	userId := ctx.Locals("userId").(uuid.UUID)
-	commentId, err := uuid.Parse(ctx.Params("commentId"))
+	commentId, err := uuid.Parse(ctx.Params("id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid ID",
 		})
 	}
 
+	userId := ctx.Locals("userId").(uuid.UUID)
 	if err := h.CommentUsecase.DeleteComment(userId, commentId); err != nil {
 		if err.Error() == "unauthorized" {
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "You can only delete your own comment"})
