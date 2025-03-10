@@ -15,5 +15,5 @@ type Thread struct {
 	ModifiedDate time.Time `json:"modified_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 
 	User    User      `json:"user" gorm:"foreignKey:UserId"`
-	Comment []Comment `json:"-" gorm:"foreignKey:ThreadId"`
+	Comment []Comment `json:"-" gorm:"foreignKey:ThreadId;constraint:OnDelete:CASCADE;"`
 }

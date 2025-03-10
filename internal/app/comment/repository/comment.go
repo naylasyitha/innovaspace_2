@@ -14,6 +14,7 @@ type CommentMySQLItf interface {
 	GetCommentsByThreadId(threadId uuid.UUID) ([]entity.Comment, error)
 	UpdateComment(comment entity.Comment) error
 	DeleteComment(commentId uuid.UUID) error
+	DeleteCommentsByThreadId(threadId uuid.UUID) error
 }
 
 type CommentMySQL struct {

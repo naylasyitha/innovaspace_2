@@ -104,6 +104,10 @@ func (u ThreadUsecase) DeleteThread(threadId uuid.UUID, userId uuid.UUID) error 
 		return errors.New("not allowed to delete thread")
 	}
 
+	if err := u.commentRepo.DeleteCommentsByThreadId(threadId); err != nil {
+		return errors.New("failed to delete comment: " + err.Error())
+	}
+
 	return u.threadRepo.DeleteThread(threadId)
 }
 

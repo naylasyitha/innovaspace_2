@@ -115,12 +115,7 @@ func (h ThreadHandler) DeleteThread(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userId, ok := ctx.Locals("userId").(uuid.UUID)
-	if !ok {
-		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error": "invalid ID",
-		})
-	}
+	userId := ctx.Locals("userId").(uuid.UUID)
 
 	err = h.threadUsecase.DeleteThread(threadId, userId)
 	if err != nil {
