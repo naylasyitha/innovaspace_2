@@ -5,6 +5,10 @@ import (
 	CommentHandler "innovaspace/internal/app/comment/interface/rest"
 	CommentRepository "innovaspace/internal/app/comment/repository"
 	CommentUsecase "innovaspace/internal/app/comment/usecase"
+	NewKelasHandler "innovaspace/internal/app/kelas/interface/rest"
+	KelasRepository "innovaspace/internal/app/kelas/repository"
+	KelasUsecase "innovaspace/internal/app/kelas/usecase"
+	MateriRepository "innovaspace/internal/app/materi/repository"
 	MentorHandler "innovaspace/internal/app/mentor/interface/rest"
 	MentorRepository "innovaspace/internal/app/mentor/repository"
 	MentorUsecase "innovaspace/internal/app/mentor/usecase"
@@ -24,12 +28,16 @@ import (
 	CORS "innovaspace/internal/middleware"
 	"innovaspace/internal/validation"
 	"log"
+	"os"
 
+	"github.com/midtrans/midtrans-go"
+	"github.com/midtrans/midtrans-go/snap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var SupabaseStorage storage.StorageSupabase
+var SnapClient snap.Client
 
 func Start() error {
 	config, err := env.New()
@@ -71,11 +79,22 @@ func Start() error {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	err = database.AutoMigrate(&entity.Kelas{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	err = database.AutoMigrate(&entity.Materi{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
 	app := fiber.New()
 
 	jwt := jwt.NewJWT()
 	middleware := middleware.NewMiddleware(jwt)
 	CORS.CorsMiddleware(app)
+	SnapClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
 
 	v1 := app.Group("/api/v1")
 
@@ -97,7 +116,15 @@ func Start() error {
 	ThreadUsecase := ThreadUsecase.NewThreadUsecase(ThreadRepository, CommentRepository)
 	ThreadHandler.NewThreadHandler(v1, ThreadUsecase, middleware)
 
+	MateriRepository := MateriRepository.NewMateriMySQL(database)
+
+	KelasRepository := KelasRepository.NewKelasMySQL(database)
+	KelasUsecase := KelasUsecase.NewKelasUsecase(KelasRepository, MateriRepository)
+	NewKelasHandler.NewKelasHandler(v1, KelasUsecase, middleware)
+
 	Seed.SeedMentors(database)
+	Seed.SeedKelas(database)
+	Seed.SeedMateri(database)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
 }

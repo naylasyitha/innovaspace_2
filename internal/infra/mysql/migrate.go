@@ -31,5 +31,17 @@ func Migrate(db *gorm.DB) error {
 		return err
 	}
 
+	if err := db.AutoMigrate(
+		entity.Kelas{},
+	); err != nil {
+		return err
+	}
+
+	if err := db.AutoMigrate(
+		entity.Materi{},
+	); err != nil {
+		return err
+	}
+
 	return nil
 }

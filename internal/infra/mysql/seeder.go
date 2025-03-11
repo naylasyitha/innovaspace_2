@@ -94,3 +94,117 @@ func SeedMentors(db *gorm.DB) {
 	}
 
 }
+
+func SeedKelas(db *gorm.DB) {
+	kelass := []entity.Kelas{
+		{
+			Id:               "COURSEB0001",
+			Nama:             "Introduction to Business Intelligence",
+			Deskripsi:        "Kursus dasar tentang Business Intelligence (BI) yang mengajarkan cara menganalisis data bisnis untuk pengambilan keputusan yang lebih baik.",
+			Kategori:         "Business",
+			JumlahMateri:     3,
+			CoverCourse:      "https://rshdseakqgwspflewctn.supabase.co/storage/v1/object/sign/innovaspace-userprofile/cover-course/innovaspace-course1.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpbm5vdmFzcGFjZS11c2VycHJvZmlsZS9jb3Zlci1jb3Vyc2UvaW5ub3Zhc3BhY2UtY291cnNlMS5qcGciLCJpYXQiOjE3NDE3MDQwNTAsImV4cCI6MjA1NzA2NDA1MH0.wM3eU3oHBUY06P6BtX6RNdVaFyG6OF2anejTQoLxAs8",
+			TingkatKesulitan: "Beginner",
+			Durasi:           5,
+			CreatedDate:      time.Now(),
+			ModifiedDate:     time.Now(),
+		},
+		{
+			Id:               "COURSEB0002",
+			Nama:             "Advanced Data Analytics",
+			Deskripsi:        "Kursus lanjutan tentang Data Analytics untuk bisnis, dengan fokus pada teknik analisis data yang mendalam dan aplikasinya dalam meningkatkan performa bisnis.",
+			Kategori:         "Business",
+			JumlahMateri:     3,
+			CoverCourse:      "https://rshdseakqgwspflewctn.supabase.co/storage/v1/object/sign/innovaspace-userprofile/cover-course/innovaspace-course2.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpbm5vdmFzcGFjZS11c2VycHJvZmlsZS9jb3Zlci1jb3Vyc2UvaW5ub3Zhc3BhY2UtY291cnNlMi5qcGciLCJpYXQiOjE3NDE3MDQyNTgsImV4cCI6MjA1NzA2NDI1OH0.IXdAQmlB1f-yXwHZaoQWGkIWqkI6qMEAk923pKjMC5I",
+			TingkatKesulitan: "Advanced",
+			Durasi:           10,
+			CreatedDate:      time.Now(),
+			ModifiedDate:     time.Now(),
+		},
+	}
+
+	for _, kelas := range kelass {
+		var existing entity.Kelas
+		result := db.Where("nama = ?", kelas.Nama).First(&existing)
+		if result.RowsAffected == 0 {
+			db.Create(&kelas)
+		}
+	}
+}
+
+func SeedMateri(db *gorm.DB) {
+	materis := []entity.Materi{
+		{
+			Id:           uuid.New(),
+			KelasId:      "COURSEB0001",
+			IsFree:       true,
+			Judul:        "Intro to Business Intelligence",
+			Deskripsi:    "",
+			PathFile:     "https://youtu.be/dn97ux9exbY?si=s9ZHhRSr1MJ37A4v",
+			CreatedDate:  time.Now(),
+			ModifiedDate: time.Now(),
+		},
+		{
+			Id:           uuid.New(),
+			KelasId:      "COURSEB0001",
+			IsFree:       true,
+			Judul:        "Introduction to Business Intelligence",
+			Deskripsi:    "Pengenalan dasar tentang Business Intelligence.",
+			PathFile:     "",
+			CreatedDate:  time.Now(),
+			ModifiedDate: time.Now(),
+		},
+		{
+			Id:      uuid.New(),
+			KelasId: "COURSEB0001",
+			IsFree:  true,
+			Judul:   "Study Case",
+			Deskripsi: `1. Lotte.com: BI Increases Company Revenue
+Lotte.com is the leading internet shopping mall in Korea with 13 million customers.
+Challenge: With more than 1 million site visitors daily, company executives wanted to understand why customers abandon shopping carts.`,
+			PathFile:     "",
+			CreatedDate:  time.Now(),
+			ModifiedDate: time.Now(),
+		},
+		{
+			Id:           uuid.New(),
+			KelasId:      "COURSEB0002",
+			IsFree:       true,
+			Judul:        "Google Advanced Data Analytics Certification",
+			Deskripsi:    "",
+			PathFile:     "https://youtu.be/gTf2GLEhKgA?si=MP8BD7ICHjlkXTsC",
+			CreatedDate:  time.Now(),
+			ModifiedDate: time.Now(),
+		},
+		{
+			Id:           uuid.New(),
+			KelasId:      "COURSEB0002",
+			IsFree:       true,
+			Judul:        "Introduction to Advanced Data Analytics",
+			Deskripsi:    "Pengenalan tentang analisis data lanjutan.",
+			PathFile:     "",
+			CreatedDate:  time.Now(),
+			ModifiedDate: time.Now(),
+		},
+		{
+			Id:      uuid.New(),
+			KelasId: "COURSEB0002",
+			IsFree:  true,
+			Judul:   "Study case",
+			Deskripsi: `GE Renewable Energy: Harnessing AI for Wind Turbine Optimization
+			The Challenge
+GE Renewable Energy sought to improve the performance and reliability of its wind turbines, aiming to reduce downtime and maintenance costs while maximizing energy output.`,
+			PathFile:     "",
+			CreatedDate:  time.Now(),
+			ModifiedDate: time.Now(),
+		},
+	}
+
+	for _, materi := range materis {
+		var existing entity.Materi
+		result := db.Where("kelas_id = ? AND path_file = ?", materi.KelasId, materi.PathFile).First(&existing)
+		if result.RowsAffected == 0 {
+			db.Create(&materi)
+		}
+	}
+}

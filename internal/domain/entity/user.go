@@ -23,7 +23,11 @@ type User struct {
 	CreatedDate  time.Time  `json:"created_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
 	ModifiedDate time.Time  `json:"modified_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 
-	Mentor  Mentor    `json:"mentor" gorm:"foreignKey:MentorId"`
-	Thread  []Thread  `json:"-" gorm:"foreignKey:UserId"`
-	Comment []Comment `json:"-" gorm:"foreignKey:UserId"`
+	Mentor  Mentor       `json:"mentor" gorm:"foreignKey:MentorId"`
+	Thread  []Thread     `json:"-" gorm:"foreignKey:UserId"`
+	Comment []Comment    `json:"-" gorm:"foreignKey:UserId"`
+	Payment []Pembayaran `json:"-" gorm:"foreignKey:UserId"`
+	Kelas   []Kelas      `json:"-" gorm:"foreignKey:UserId"`
+	Materi  []Materi     `json:"-" gorm:"foreignKey:UserId"`
+	// Subscribe *Subscribe  `json:"-" gorm:"foreignKey:UserId"`
 }
