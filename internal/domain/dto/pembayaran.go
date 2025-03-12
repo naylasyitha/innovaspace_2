@@ -6,6 +6,7 @@ type PaymentRequest struct {
 	UserId    uuid.UUID `json:"user_id" validate:"required"`
 	Total     int       `json:"total" validate:"required"`
 	TipeBayar string    `json:"tipe_bayar" validate:"required"`
+	Durasi    int       `json:"durasi" validate:"required"`
 }
 
 type PaymentResponse struct {

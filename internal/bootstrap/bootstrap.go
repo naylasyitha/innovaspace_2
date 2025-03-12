@@ -5,13 +5,22 @@ import (
 	CommentHandler "innovaspace/internal/app/comment/interface/rest"
 	CommentRepository "innovaspace/internal/app/comment/repository"
 	CommentUsecase "innovaspace/internal/app/comment/usecase"
-	NewKelasHandler "innovaspace/internal/app/kelas/interface/rest"
+	EnrollHandler "innovaspace/internal/app/enroll/interface/rest"
+	EnrollRepository "innovaspace/internal/app/enroll/repository"
+	EnrollUsecase "innovaspace/internal/app/enroll/usecase"
+	KelasHandler "innovaspace/internal/app/kelas/interface/rest"
 	KelasRepository "innovaspace/internal/app/kelas/repository"
 	KelasUsecase "innovaspace/internal/app/kelas/usecase"
 	MateriRepository "innovaspace/internal/app/materi/repository"
 	MentorHandler "innovaspace/internal/app/mentor/interface/rest"
 	MentorRepository "innovaspace/internal/app/mentor/repository"
 	MentorUsecase "innovaspace/internal/app/mentor/usecase"
+	PembayaranHandler "innovaspace/internal/app/pembayaran/interface/rest"
+	PembayaranRepository "innovaspace/internal/app/pembayaran/repository"
+	PembayaranUsecase "innovaspace/internal/app/pembayaran/usecase"
+	ProgressHandler "innovaspace/internal/app/progress/interface/rest"
+	ProgressRepository "innovaspace/internal/app/progress/repository"
+	ProgressUsecase "innovaspace/internal/app/progress/usecase"
 	ThreadHandler "innovaspace/internal/app/thread/interface/rest"
 	ThreadRepository "innovaspace/internal/app/thread/repository"
 	ThreadUsecase "innovaspace/internal/app/thread/usecase"
@@ -84,7 +93,22 @@ func Start() error {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
+	err = database.AutoMigrate(&entity.Pembayaran{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
 	err = database.AutoMigrate(&entity.Materi{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	err = database.AutoMigrate(&entity.Enroll{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	err = database.AutoMigrate(&entity.Progress{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
@@ -120,7 +144,19 @@ func Start() error {
 
 	KelasRepository := KelasRepository.NewKelasMySQL(database)
 	KelasUsecase := KelasUsecase.NewKelasUsecase(KelasRepository, MateriRepository)
-	NewKelasHandler.NewKelasHandler(v1, KelasUsecase, middleware)
+	KelasHandler.NewKelasHandler(v1, KelasUsecase, middleware)
+
+	PembayaranRepository := PembayaranRepository.NewPembayaranMySQL(database)
+	PembayaranUsecase := PembayaranUsecase.NewPembayaranUsecase(PembayaranRepository, UserRepository, SnapClient)
+	PembayaranHandler.NewPembayaranHandler(v1, PembayaranUsecase)
+
+	EnrollRepository := EnrollRepository.NewEnrollMySQL(database)
+	EnrollUsecase := EnrollUsecase.NewEnrollUsecase(EnrollRepository, UserRepository, KelasRepository)
+	EnrollHandler.NewEnrollHandler(v1, EnrollUsecase, middleware)
+
+	ProgressRepository := ProgressRepository.NewProgressMySQL(database)
+	ProgressUsecase := ProgressUsecase.NewProgressUsecase(ProgressRepository, MateriRepository)
+	ProgressHandler.NewProgressHandler(v1, ProgressUsecase, middleware)
 
 	Seed.SeedMentors(database)
 	Seed.SeedKelas(database)

@@ -5,13 +5,11 @@ import (
 	"innovaspace/internal/app/kelas/repository"
 	MateriRepo "innovaspace/internal/app/materi/repository"
 	"innovaspace/internal/domain/dto"
-
-	"github.com/google/uuid"
 )
 
 type KelasUsecaseItf interface {
 	GetAllKelas() ([]dto.Kelas, error)
-	GetKelasDetails(kelasId uuid.UUID) (*dto.KelasDetailResponse, error)
+	GetKelasDetails(kelasId string) (*dto.KelasDetailResponse, error)
 }
 
 type KelasUsecase struct {
@@ -48,7 +46,7 @@ func (u *KelasUsecase) GetAllKelas() ([]dto.Kelas, error) {
 	return response, nil
 }
 
-func (u *KelasUsecase) GetKelasDetails(kelasId uuid.UUID) (*dto.KelasDetailResponse, error) {
+func (u *KelasUsecase) GetKelasDetails(kelasId string) (*dto.KelasDetailResponse, error) {
 	kelas, err := u.kelasRepo.FindById(kelasId)
 	if err != nil {
 		return nil, err
@@ -62,12 +60,12 @@ func (u *KelasUsecase) GetKelasDetails(kelasId uuid.UUID) (*dto.KelasDetailRespo
 	var materiResponses []dto.Materi
 	for _, materi := range materies {
 		materiResponses = append(materiResponses, dto.Materi{
-			MateriId:  materi.Id,
-			KelasId:   materi.KelasId,
-			Judul:     materi.Judul,
-			Deskripsi: materi.Deskripsi,
-			IsFree:    materi.IsFree,
-			PathFile:  materi.PathFile,
+			MateriId:    materi.Id,
+			KelasId:     materi.KelasId,
+			JenisMateri: materi.JenisMateri,
+			Judul:       materi.Judul,
+			Deskripsi:   materi.Deskripsi,
+			PathFile:    materi.PathFile,
 		})
 	}
 

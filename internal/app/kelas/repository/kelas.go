@@ -3,12 +3,11 @@ package repository
 import (
 	"innovaspace/internal/domain/entity"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type KelasMySQLItf interface {
-	FindById(id uuid.UUID) (*entity.Kelas, error)
+	FindById(id string) (*entity.Kelas, error)
 	GetAllKelas() ([]entity.Kelas, error)
 }
 
@@ -20,7 +19,7 @@ func NewKelasMySQL(db *gorm.DB) KelasMySQLItf {
 	return &KelasMySQL{db}
 }
 
-func (r *KelasMySQL) FindById(id uuid.UUID) (*entity.Kelas, error) {
+func (r *KelasMySQL) FindById(id string) (*entity.Kelas, error) {
 	var kelas entity.Kelas
 	err := r.db.Where("id = ?", id).First(&kelas).Error
 	if err != nil {

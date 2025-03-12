@@ -38,7 +38,25 @@ func Migrate(db *gorm.DB) error {
 	}
 
 	if err := db.AutoMigrate(
+		entity.Pembayaran{},
+	); err != nil {
+		return err
+	}
+
+	if err := db.AutoMigrate(
 		entity.Materi{},
+	); err != nil {
+		return err
+	}
+
+	if err := db.AutoMigrate(
+		entity.Enroll{},
+	); err != nil {
+		return err
+	}
+
+	if err := db.AutoMigrate(
+		entity.Progress{},
 	); err != nil {
 		return err
 	}

@@ -5,7 +5,6 @@ import (
 	"innovaspace/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 type KelasHandler struct {
@@ -20,7 +19,7 @@ func NewKelasHandler(routerGroup fiber.Router, kelasUsecase usecase.KelasUsecase
 	}
 
 	routerGroup = routerGroup.Group("/kelas")
-	routerGroup.Get("/", KelasHandler.middleware.Authentication, KelasHandler.GetAllKelas)
+	routerGroup.Get("/", KelasHandler.GetAllKelas)
 	routerGroup.Get("/get-detail-kelas/:id", KelasHandler.middleware.Authentication, KelasHandler.GetKelasDetails)
 }
 
@@ -51,10 +50,11 @@ func (h *KelasHandler) GetAllKelas(ctx *fiber.Ctx) error {
 }
 
 func (h *KelasHandler) GetKelasDetails(ctx *fiber.Ctx) error {
-	kelasId, err := uuid.Parse(ctx.Params("id"))
-	if err != nil {
-		return errorResponse(ctx, fiber.StatusBadRequest,
-			"ID kelas tidak valid", "Format ID tidak valid")
+	kelasId := ctx.Params("id")
+	if kelasId == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Kelas ID is required",
+		})
 	}
 
 	kelasDetail, err := h.kelasUsecase.GetKelasDetails(kelasId)

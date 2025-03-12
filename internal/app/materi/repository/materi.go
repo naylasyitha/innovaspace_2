@@ -9,7 +9,7 @@ import (
 
 type MateriMySQLItf interface {
 	FindById(id uuid.UUID) (*entity.Materi, error)
-	GetMateriByKelasId(kelasId uuid.UUID) ([]entity.Materi, error)
+	GetMateriByKelasId(kelasId string) ([]entity.Materi, error)
 }
 
 type MateriMySQL struct {
@@ -29,7 +29,7 @@ func (r *MateriMySQL) FindById(id uuid.UUID) (*entity.Materi, error) {
 	return &materi, nil
 }
 
-func (r *MateriMySQL) GetMateriByKelasId(kelasId uuid.UUID) ([]entity.Materi, error) {
+func (r *MateriMySQL) GetMateriByKelasId(kelasId string) ([]entity.Materi, error) {
 	var materi []entity.Materi
 	err := r.db.Where("kelas_id = ?", kelasId).Find(&materi).Error
 	if err != nil {

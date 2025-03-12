@@ -28,10 +28,10 @@ type KelasDetailResponse struct {
 }
 
 type Materi struct {
-	MateriId  uuid.UUID `json:"materi_id"`
-	KelasId   string    `json:"kelas_id"`
-	Judul     string    `json:"judul"`
-	Deskripsi string    `json:"deskripsi"`
-	IsFree    bool      `json:"is_free"`
-	PathFile  string    `json:"path_file"`
+	MateriId    uuid.UUID `json:"materi_id"`
+	KelasId     string    `json:"kelas_id"`
+	JenisMateri string    `json:"jenis_materi"`
+	Judul       string    `json:"judul"`
+	Deskripsi   string    `json:"deskripsi"`
+	PathFile    string    `json:"path_file"`
 }

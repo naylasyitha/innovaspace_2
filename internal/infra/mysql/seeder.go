@@ -106,6 +106,7 @@ func SeedKelas(db *gorm.DB) {
 			CoverCourse:      "https://rshdseakqgwspflewctn.supabase.co/storage/v1/object/sign/innovaspace-userprofile/cover-course/innovaspace-course1.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpbm5vdmFzcGFjZS11c2VycHJvZmlsZS9jb3Zlci1jb3Vyc2UvaW5ub3Zhc3BhY2UtY291cnNlMS5qcGciLCJpYXQiOjE3NDE3MDQwNTAsImV4cCI6MjA1NzA2NDA1MH0.wM3eU3oHBUY06P6BtX6RNdVaFyG6OF2anejTQoLxAs8",
 			TingkatKesulitan: "Beginner",
 			Durasi:           5,
+			IsPremium:        false,
 			CreatedDate:      time.Now(),
 			ModifiedDate:     time.Now(),
 		},
@@ -118,6 +119,7 @@ func SeedKelas(db *gorm.DB) {
 			CoverCourse:      "https://rshdseakqgwspflewctn.supabase.co/storage/v1/object/sign/innovaspace-userprofile/cover-course/innovaspace-course2.jpg?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJpbm5vdmFzcGFjZS11c2VycHJvZmlsZS9jb3Zlci1jb3Vyc2UvaW5ub3Zhc3BhY2UtY291cnNlMi5qcGciLCJpYXQiOjE3NDE3MDQyNTgsImV4cCI6MjA1NzA2NDI1OH0.IXdAQmlB1f-yXwHZaoQWGkIWqkI6qMEAk923pKjMC5I",
 			TingkatKesulitan: "Advanced",
 			Durasi:           10,
+			IsPremium:        true,
 			CreatedDate:      time.Now(),
 			ModifiedDate:     time.Now(),
 		},
@@ -125,9 +127,9 @@ func SeedKelas(db *gorm.DB) {
 
 	for _, kelas := range kelass {
 		var existing entity.Kelas
-		result := db.Where("nama = ?", kelas.Nama).First(&existing)
+		result := db.Where("id = ?", kelas.Id).First(&existing)
 		if result.RowsAffected == 0 {
-			db.Create(&kelas)
+			db.Create(kelass)
 		}
 	}
 }
@@ -137,7 +139,7 @@ func SeedMateri(db *gorm.DB) {
 		{
 			Id:           uuid.New(),
 			KelasId:      "COURSEB0001",
-			IsFree:       true,
+			JenisMateri:  "Video",
 			Judul:        "Intro to Business Intelligence",
 			Deskripsi:    "",
 			PathFile:     "https://youtu.be/dn97ux9exbY?si=s9ZHhRSr1MJ37A4v",
@@ -147,18 +149,18 @@ func SeedMateri(db *gorm.DB) {
 		{
 			Id:           uuid.New(),
 			KelasId:      "COURSEB0001",
-			IsFree:       true,
-			Judul:        "Introduction to Business Intelligence",
+			JenisMateri:  "Teks",
+			Judul:        "BAB 1.1 Introduction to Business Intelligence",
 			Deskripsi:    "Pengenalan dasar tentang Business Intelligence.",
 			PathFile:     "",
 			CreatedDate:  time.Now(),
 			ModifiedDate: time.Now(),
 		},
 		{
-			Id:      uuid.New(),
-			KelasId: "COURSEB0001",
-			IsFree:  true,
-			Judul:   "Study Case",
+			Id:          uuid.New(),
+			KelasId:     "COURSEB0001",
+			JenisMateri: "Study Case",
+			Judul:       "Study Case",
 			Deskripsi: `1. Lotte.com: BI Increases Company Revenue
 Lotte.com is the leading internet shopping mall in Korea with 13 million customers.
 Challenge: With more than 1 million site visitors daily, company executives wanted to understand why customers abandon shopping carts.`,
@@ -169,7 +171,7 @@ Challenge: With more than 1 million site visitors daily, company executives want
 		{
 			Id:           uuid.New(),
 			KelasId:      "COURSEB0002",
-			IsFree:       true,
+			JenisMateri:  "Video",
 			Judul:        "Google Advanced Data Analytics Certification",
 			Deskripsi:    "",
 			PathFile:     "https://youtu.be/gTf2GLEhKgA?si=MP8BD7ICHjlkXTsC",
@@ -179,7 +181,7 @@ Challenge: With more than 1 million site visitors daily, company executives want
 		{
 			Id:           uuid.New(),
 			KelasId:      "COURSEB0002",
-			IsFree:       true,
+			JenisMateri:  "Teks",
 			Judul:        "Introduction to Advanced Data Analytics",
 			Deskripsi:    "Pengenalan tentang analisis data lanjutan.",
 			PathFile:     "",
@@ -187,10 +189,10 @@ Challenge: With more than 1 million site visitors daily, company executives want
 			ModifiedDate: time.Now(),
 		},
 		{
-			Id:      uuid.New(),
-			KelasId: "COURSEB0002",
-			IsFree:  true,
-			Judul:   "Study case",
+			Id:          uuid.New(),
+			KelasId:     "COURSEB0002",
+			JenisMateri: "Study Case",
+			Judul:       "Study case",
 			Deskripsi: `GE Renewable Energy: Harnessing AI for Wind Turbine Optimization
 			The Challenge
 GE Renewable Energy sought to improve the performance and reliability of its wind turbines, aiming to reduce downtime and maintenance costs while maximizing energy output.`,
@@ -202,7 +204,7 @@ GE Renewable Energy sought to improve the performance and reliability of its win
 
 	for _, materi := range materis {
 		var existing entity.Materi
-		result := db.Where("kelas_id = ? AND path_file = ?", materi.KelasId, materi.PathFile).First(&existing)
+		result := db.Where("kelas_id = ? AND judul = ?", materi.KelasId, materi.Judul).First(&existing)
 		if result.RowsAffected == 0 {
 			db.Create(&materi)
 		}
