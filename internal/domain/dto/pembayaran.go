@@ -15,5 +15,12 @@ type PaymentResponse struct {
 	Total       int       `json:"total"`
 	Status      string    `json:"status"`
 	Token       string    `json:"token"`
+	PaymentUrl  string    `json:"payment_url"`
 	CreatedDate string    `json:"created_at"`
+}
+
+type MidtransWebhookRequest struct {
+	OrderId           string `json:"order_id"`
+	TransactionStatus string `json:"transaction_status"`
+	FraudStatus       string `json:"fraud_status"`
 }

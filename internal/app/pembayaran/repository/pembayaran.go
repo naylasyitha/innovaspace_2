@@ -11,7 +11,7 @@ type PembayaranMySQLItf interface {
 	CreatePembayaran(*entity.Pembayaran) error
 	GetPembayaranById(Id uuid.UUID) (*entity.Pembayaran, error)
 	GetPembayaranByUserId(userId uuid.UUID) ([]entity.Pembayaran, error)
-	GetPembayaranByOrderId(orderId string) (*entity.Pembayaran, error)
+	GetPembayaranByOrderId(orderId string) (entity.Pembayaran, error)
 	UpdatePembayaran(id uuid.UUID, status string) error
 }
 
@@ -43,14 +43,14 @@ func (r *PembayaranMySQL) GetPembayaranByUserId(userId uuid.UUID) ([]entity.Pemb
 	return pembayaran, nil
 }
 
-func (r *PembayaranMySQL) GetPembayaranByOrderId(orderId string) (*entity.Pembayaran, error) {
+func (r *PembayaranMySQL) GetPembayaranByOrderId(orderId string) (entity.Pembayaran, error) {
 	var pembayaran entity.Pembayaran
 	if err := r.db.Where("order_id = ?", orderId).Find(&pembayaran).Error; err != nil {
-		return nil, err
+		return entity.Pembayaran{}, err
 	}
-	return &pembayaran, nil
+	return pembayaran, nil
 }
 
 func (r *PembayaranMySQL) UpdatePembayaran(id uuid.UUID, status string) error {
-	return r.db.Model(&entity.Pembayaran{}).Where("id = ?").Update("status", status).Error
+	return r.db.Model(&entity.Pembayaran{}).Where("id = ?", id).Update("status", status).Error
 }

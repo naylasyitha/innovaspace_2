@@ -17,6 +17,7 @@ type Kelas struct {
 	CreatedDate      time.Time `json:"created_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP"`
 	ModifiedDate     time.Time `json:"modified_date" gorm:"type:datetime;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 
-	Materi      []Materi  `json:"-" gorm:"foreignKey:KelasId"`
-	Enrollments []*Enroll `json:"-" gorm:"foreignKey:KelasId"`
+	Materi      []Materi    `json:"-" gorm:"foreignKey:KelasId"`
+	Enrollments []*Enroll   `json:"-" gorm:"foreignKey:KelasId"`
+	Progress    []*Progress `json:"-" gorm:"foreignKey:KelasId"`
 }

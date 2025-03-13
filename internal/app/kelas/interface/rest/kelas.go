@@ -20,7 +20,7 @@ func NewKelasHandler(routerGroup fiber.Router, kelasUsecase usecase.KelasUsecase
 
 	routerGroup = routerGroup.Group("/kelas")
 	routerGroup.Get("/", KelasHandler.GetAllKelas)
-	routerGroup.Get("/get-detail-kelas/:id", KelasHandler.middleware.Authentication, KelasHandler.GetKelasDetails)
+	routerGroup.Get("/get-detail-kelas/:id", KelasHandler.GetKelasDetails)
 }
 
 func errorResponse(ctx *fiber.Ctx, status int, message, detail string) error {

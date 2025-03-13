@@ -116,51 +116,55 @@ func Start() error {
 	app := fiber.New()
 
 	jwt := jwt.NewJWT()
-	middleware := middleware.NewMiddleware(jwt)
+	middlewareService := middleware.NewMiddleware(jwt)
 	CORS.CorsMiddleware(app)
-	SnapClient.New(os.Getenv("MIDTRANS_SERVER_KEY"), midtrans.Sandbox)
+	snapClient := InitSnapClient()
 
 	v1 := app.Group("/api/v1")
 
 	inputValidation := validation.NewInputValidation()
 
-	UserRepository := UserRepository.NewUserMySQL(database)
-	UserUsecase := UserUsecase.NewUserUsecase(UserRepository, *inputValidation, *jwt)
-	UserHandler.NewUserHandler(v1, UserUsecase, *inputValidation, middleware)
+	userRepo := UserRepository.NewUserMySQL(database)
+	mentorRepo := MentorRepository.NewMentorMySQL(database)
+	commentRepo := CommentRepository.NewCommentMySQL(database)
+	threadRepo := ThreadRepository.NewThreadMySQL(database)
+	materiRepo := MateriRepository.NewMateriMySQL(database)
+	kelasRepo := KelasRepository.NewKelasMySQL(database)
+	pembayaranRepo := PembayaranRepository.NewPembayaranMySQL(database)
+	enrollRepo := EnrollRepository.NewEnrollMySQL(database)
+	progressRepo := ProgressRepository.NewProgressMySQL(database)
 
-	MentorRepository := MentorRepository.NewMentorMySQL(database)
-	MentorUsecase := MentorUsecase.NewMentorUsecase(MentorRepository, UserRepository)
-	MentorHandler.NewMentorHandler(v1, MentorUsecase, UserRepository, middleware)
+	mentorUsecase := MentorUsecase.NewMentorUsecase(mentorRepo, userRepo)
+	commentUsecase := CommentUsecase.NewCommentUsecase(commentRepo)
+	threadUsecase := ThreadUsecase.NewThreadUsecase(threadRepo, commentRepo)
+	kelasUsecase := KelasUsecase.NewKelasUsecase(kelasRepo, materiRepo)
+	pembayaranUsecase := PembayaranUsecase.NewPembayaranUsecase(pembayaranRepo, userRepo, snapClient)
+	enrollUsecase := EnrollUsecase.NewEnrollUsecase(enrollRepo, userRepo, kelasRepo)
+	progressUsecase := ProgressUsecase.NewProgressUsecase(progressRepo, materiRepo)
+	userUsecase := UserUsecase.NewUserUsecase(userRepo, mentorRepo, enrollRepo, progressRepo, kelasRepo, *inputValidation, *jwt)
 
-	CommentRepository := CommentRepository.NewCommentMySQL(database)
-	CommentUsecase := CommentUsecase.NewCommentUsecase(CommentRepository)
-	CommentHandler.NewCommentHandler(v1, CommentUsecase, middleware)
-
-	ThreadRepository := ThreadRepository.NewThreadMySQL(database)
-	ThreadUsecase := ThreadUsecase.NewThreadUsecase(ThreadRepository, CommentRepository)
-	ThreadHandler.NewThreadHandler(v1, ThreadUsecase, middleware)
-
-	MateriRepository := MateriRepository.NewMateriMySQL(database)
-
-	KelasRepository := KelasRepository.NewKelasMySQL(database)
-	KelasUsecase := KelasUsecase.NewKelasUsecase(KelasRepository, MateriRepository)
-	KelasHandler.NewKelasHandler(v1, KelasUsecase, middleware)
-
-	PembayaranRepository := PembayaranRepository.NewPembayaranMySQL(database)
-	PembayaranUsecase := PembayaranUsecase.NewPembayaranUsecase(PembayaranRepository, UserRepository, SnapClient)
-	PembayaranHandler.NewPembayaranHandler(v1, PembayaranUsecase)
-
-	EnrollRepository := EnrollRepository.NewEnrollMySQL(database)
-	EnrollUsecase := EnrollUsecase.NewEnrollUsecase(EnrollRepository, UserRepository, KelasRepository)
-	EnrollHandler.NewEnrollHandler(v1, EnrollUsecase, middleware)
-
-	ProgressRepository := ProgressRepository.NewProgressMySQL(database)
-	ProgressUsecase := ProgressUsecase.NewProgressUsecase(ProgressRepository, MateriRepository)
-	ProgressHandler.NewProgressHandler(v1, ProgressUsecase, middleware)
+	MentorHandler.NewMentorHandler(v1, mentorUsecase, userRepo)
+	CommentHandler.NewCommentHandler(v1, commentUsecase, middlewareService)
+	ThreadHandler.NewThreadHandler(v1, threadUsecase, middlewareService)
+	KelasHandler.NewKelasHandler(v1, kelasUsecase, middlewareService)
+	PembayaranHandler.NewPembayaranHandler(v1, pembayaranUsecase, middlewareService)
+	EnrollHandler.NewEnrollHandler(v1, enrollUsecase, middlewareService)
+	ProgressHandler.NewProgressHandler(v1, progressUsecase, middlewareService)
+	UserHandler.NewUserHandler(v1, userUsecase, *inputValidation, middlewareService)
 
 	Seed.SeedMentors(database)
 	Seed.SeedKelas(database)
 	Seed.SeedMateri(database)
 
 	return app.Listen(fmt.Sprintf(":%d", config.AppPort))
+}
+
+func InitSnapClient() snap.Client {
+	midtrans.ServerKey = os.Getenv("MIDTRANS_SERVER_KEY")
+	midtrans.Environment = midtrans.Sandbox
+
+	snapClient := snap.Client{}
+	snapClient.New(midtrans.ServerKey, midtrans.Sandbox)
+
+	return snapClient
 }

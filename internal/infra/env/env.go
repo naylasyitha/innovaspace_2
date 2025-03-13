@@ -22,6 +22,9 @@ type Env struct {
 	SupabaseEndpoint   string `env:"SUPABASE_ENDPOINT"`
 	SupabaseToken      string `env:"SUPABASE_TOKEN"`
 	SupabaseBucketName string `env:"SUPABASE_BUCKET_NAME"`
+
+	MidtransServerKey string `env:"MIDTRANS_SERVER_KEY"`
+	MidtransClientKey string `env:"MIDTRANS_CLIENTS_KEY"`
 }
 
 func New() (*Env, error) {

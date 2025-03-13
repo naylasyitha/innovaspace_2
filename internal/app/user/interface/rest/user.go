@@ -173,9 +173,7 @@ func (h *UserHandler) GetProfile(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{
 		"success": true,
 		"message": "Profil berhasil ditemukan",
-		"data": fiber.Map{
-			"profile": user,
-		},
+		"data":    user,
 	})
 }
 

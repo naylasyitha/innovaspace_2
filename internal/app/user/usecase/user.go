@@ -3,6 +3,10 @@ package usecase
 import (
 	"errors"
 	"fmt"
+	EnrollRepo "innovaspace/internal/app/enroll/repository"
+	KelasRepo "innovaspace/internal/app/kelas/repository"
+	MentorRepo "innovaspace/internal/app/mentor/repository"
+	ProgressRepo "innovaspace/internal/app/progress/repository"
 	"innovaspace/internal/app/user/repository"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/domain/entity"
@@ -24,16 +28,24 @@ type UserUsecaseItf interface {
 }
 
 type UserUsecase struct {
-	userRepo  repository.UserMySQLItf
-	jwt       jwt.JWT
-	validator validation.InputValidation
+	userRepo     repository.UserMySQLItf
+	mentorRepo   MentorRepo.MentorMySQLItf
+	enrollRepo   EnrollRepo.EnrollMySQLItf
+	progressRepo ProgressRepo.ProgressMySQLItf
+	kelasRepo    KelasRepo.KelasMySQLItf
+	jwt          jwt.JWT
+	validator    validation.InputValidation
 }
 
-func NewUserUsecase(userRepo repository.UserMySQLItf, validator validation.InputValidation, jwt jwt.JWT) UserUsecaseItf {
+func NewUserUsecase(userRepo repository.UserMySQLItf, mentorRepo MentorRepo.MentorMySQLItf, enrollRepo EnrollRepo.EnrollMySQLItf, progressRepo ProgressRepo.ProgressMySQLItf, kelasRepo KelasRepo.KelasMySQLItf, validator validation.InputValidation, jwt jwt.JWT) UserUsecaseItf {
 	return &UserUsecase{
-		userRepo:  userRepo,
-		validator: validator,
-		jwt:       jwt,
+		userRepo:     userRepo,
+		mentorRepo:   mentorRepo,
+		enrollRepo:   enrollRepo,
+		progressRepo: progressRepo,
+		kelasRepo:    kelasRepo,
+		validator:    validator,
+		jwt:          jwt,
 	}
 }
 
@@ -134,13 +146,73 @@ func (u *UserUsecase) GetProfileById(id uuid.UUID) (dto.GetProfile, error) {
 		return dto.GetProfile{}, err
 	}
 
+	var mentors []dto.ProfileMentor
+	if user.MentorId != &uuid.Nil {
+		mentor, err := u.mentorRepo.FindById(*user.MentorId)
+		if err != nil {
+			return dto.GetProfile{}, err
+		}
+
+		mentors = append(mentors, dto.ProfileMentor{
+			Id:           mentor.Id,
+			Nama:         mentor.Nama,
+			Deskripsi:    mentor.Deskripsi,
+			Preferensi:   mentor.Preferensi,
+			Spesialisasi: mentor.Spesialisasi,
+			Pendidikan:   mentor.Pendidikan,
+			Email:        mentor.Email,
+		})
+	}
+
+	enrollList, err := u.enrollRepo.FindByUserId(id)
+	if err != nil {
+		return dto.GetProfile{}, err
+	}
+
+	var resp []dto.ProfileKelas
+	for _, enroll := range enrollList {
+		kelas, err := u.kelasRepo.FindById(enroll.KelasId)
+		if err != nil {
+			return dto.GetProfile{}, err
+		}
+
+		progressList, err := u.progressRepo.GetProgressByUserAndKelas(id, enroll.KelasId)
+
+		if err != nil {
+			return dto.GetProfile{}, err
+		}
+
+		totalProgress := len(progressList)
+
+		var persenProgress float64
+		if kelas.JumlahMateri > 0 {
+			persenProgress = (float64(totalProgress) / float64(kelas.JumlahMateri)) * 100
+		} else {
+			persenProgress = 0.0
+		}
+
+		resp = append(resp, dto.ProfileKelas{
+			KelasId:          kelas.Id,
+			Nama:             kelas.Nama,
+			Deskripsi:        kelas.Deskripsi,
+			Kategori:         kelas.Kategori,
+			JumlahMateri:     kelas.JumlahMateri,
+			CoverCourse:      kelas.CoverCourse,
+			TingkatKesulitan: kelas.TingkatKesulitan,
+			Durasi:           kelas.Durasi,
+			Persentase:       int(persenProgress),
+		})
+	}
+
 	return dto.GetProfile{
 		Nama:       user.Nama,
 		Username:   user.Username,
 		Email:      user.Email,
 		Preferensi: user.Preferensi,
 		Institusi:  user.Institusi,
-		// UserPict: user.UserPict,
+		MentorId:   *user.MentorId,
+		Mentor:     mentors,
+		Kelas:      resp,
 	}, nil
 }
 

@@ -22,7 +22,7 @@ func NewThreadHandler(routerGroup fiber.Router, threadUsecase usecase.ThreadUsec
 
 	routerGroup = routerGroup.Group("/threads")
 	routerGroup.Post("/create-thread", ThreadHandler.middleware.Authentication, ThreadHandler.CreateThread)
-	routerGroup.Get("/show-all-thread", ThreadHandler.middleware.Authentication, ThreadHandler.GetAllThreads)
+	routerGroup.Get("/show-all-thread", ThreadHandler.GetAllThreads)
 	routerGroup.Patch("/update-thread/:id", ThreadHandler.middleware.Authentication, ThreadHandler.UpdateThread)
 	routerGroup.Delete("/delete-thread/:id", ThreadHandler.middleware.Authentication, ThreadHandler.DeleteThread)
 	routerGroup.Get("/get-detail-thread/:id", ThreadHandler.middleware.Authentication, ThreadHandler.GetThreadDetails)

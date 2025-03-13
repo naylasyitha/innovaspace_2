@@ -3,11 +3,13 @@ package repository
 import (
 	"innovaspace/internal/domain/entity"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type EnrollMySQLItf interface {
 	CreateEnroll(enroll entity.Enroll) error
+	FindByUserId(id uuid.UUID) ([]entity.Enroll, error)
 }
 
 type EnrollMySQL struct {
@@ -20,4 +22,10 @@ func NewEnrollMySQL(db *gorm.DB) EnrollMySQLItf {
 
 func (r *EnrollMySQL) CreateEnroll(enroll entity.Enroll) error {
 	return r.db.Create(&enroll).Error
+}
+
+func (r *EnrollMySQL) FindByUserId(id uuid.UUID) ([]entity.Enroll, error) {
+	var enrolls []entity.Enroll
+	err := r.db.Where("user_id = ?", id).Find(&enrolls).Error
+	return enrolls, err
 }

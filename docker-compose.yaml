@@ -1,0 +1,16 @@
+docker-compose
+services:
+  app:
+    build: .
+    container_name: innova_space
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3011:${APP_PORT}"
+    networks:
+      - maria_network
+  
+networks:
+  maria_network:
+    external: true

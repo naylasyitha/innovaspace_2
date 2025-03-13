@@ -4,6 +4,7 @@ import "github.com/google/uuid"
 
 type ProgressRequest struct {
 	MateriId uuid.UUID `json:"materi_id"`
+	KelasId  string    `json:"kelas_id"`
 	UserId   uuid.UUID `json:"user_id"`
 	Jawaban  string    `json:"jawaban"`
 }

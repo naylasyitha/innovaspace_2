@@ -6,6 +6,7 @@ import (
 	"innovaspace/internal/app/thread/repository"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/domain/entity"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -57,12 +58,20 @@ func (u ThreadUsecase) GetAllThreads() ([]dto.ThreadResponse, error) {
 	}
 
 	var response []dto.ThreadResponse
+	var date time.Time
 	for _, thread := range threads {
+		if !thread.ModifiedDate.IsZero() {
+			date = thread.ModifiedDate
+		} else {
+			date = thread.CreatedDate
+		}
+		formattedDate := date.Format("02/01/2006 15:04")
 		response = append(response, dto.ThreadResponse{
 			ThreadId: thread.Id,
 			UserId:   thread.UserId,
 			Kategori: thread.Kategori,
 			Isi:      thread.Isi,
+			Tanggal:  formattedDate,
 		})
 	}
 
@@ -123,20 +132,35 @@ func (u *ThreadUsecase) GetThreadDetails(threadId uuid.UUID) (*dto.ThreadDetailR
 	}
 
 	var commentResponses []dto.Comment
+	var dateComment time.Time
 	for _, comment := range comments {
+		if !comment.ModifiedDate.IsZero() {
+			dateComment = comment.ModifiedDate
+		} else {
+			dateComment = comment.CreatedDate
+		}
+		formattedDate := dateComment.Format("02/01/2006 15:04")
 		commentResponses = append(commentResponses, dto.Comment{
 			CommentId:   comment.Id,
 			ThreadId:    comment.ThreadId,
 			UserId:      comment.UserId,
 			IsiKomentar: comment.IsiKomentar,
+			Tanggal:     formattedDate,
 		})
 	}
 
+	var dateThread time.Time
+	if !thread.ModifiedDate.IsZero() {
+		dateThread = thread.ModifiedDate
+	} else {
+		dateThread = thread.CreatedDate
+	}
 	response := &dto.ThreadDetailResponse{
 		ThreadId: thread.Id,
 		UserId:   thread.UserId,
 		Kategori: thread.Kategori,
 		Isi:      thread.Isi,
+		Tanggal:  dateThread,
 		Comments: commentResponses,
 	}
 

@@ -41,6 +41,7 @@ func (u *ProgressUsecase) CreateProgress(input dto.ProgressRequest) (dto.Progres
 	progress := entity.Progress{
 		Id:       uuid.New(),
 		MateriId: input.MateriId,
+		KelasId:  input.KelasId,
 		UserId:   input.UserId,
 		Jawaban:  input.Jawaban,
 	}

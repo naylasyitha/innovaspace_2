@@ -3,7 +3,6 @@ package rest
 import (
 	"innovaspace/internal/app/mentor/usecase"
 	"innovaspace/internal/app/user/repository"
-	"innovaspace/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -12,18 +11,16 @@ import (
 type MentorHandler struct {
 	mentorUsecase usecase.MentorUsecaseItf
 	userRepo      repository.UserMySQLItf
-	middleware    middleware.MiddlewareItf
 }
 
-func NewMentorHandler(routerGroup fiber.Router, mentorUsecase usecase.MentorUsecaseItf, userRepo repository.UserMySQLItf, middleware middleware.MiddlewareItf) {
+func NewMentorHandler(routerGroup fiber.Router, mentorUsecase usecase.MentorUsecaseItf, userRepo repository.UserMySQLItf) {
 	MentorHandler := MentorHandler{
 		mentorUsecase: mentorUsecase,
 		userRepo:      userRepo,
-		middleware:    middleware,
 	}
 
 	routerGroup = routerGroup.Group("/mentors")
-	routerGroup.Get("/mentor-details/:id", MentorHandler.middleware.Authentication, MentorHandler.GetMentorDetails)
+	routerGroup.Get("/mentor-details/:id", MentorHandler.GetMentorDetails)
 	routerGroup.Post("/by-preferensi", MentorHandler.GetMentorsByUserPreferensi)
 	routerGroup.Get("/", MentorHandler.GetAllMentors)
 }
