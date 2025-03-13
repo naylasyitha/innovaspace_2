@@ -17,6 +17,7 @@ type UserMySQLItf interface {
 	FindById(userId uuid.UUID) (*entity.User, error)
 	FindByPreferensi(userId uuid.UUID) (*entity.User, error)
 	FindByUsername(username string) (*entity.User, error)
+	UpdateWithTx(tx *gorm.DB, user *entity.User) error
 }
 
 type UserMySQL struct {
@@ -91,4 +92,8 @@ func (r *UserMySQL) FindByUsername(username string) (*entity.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *UserMySQL) UpdateWithTx(tx *gorm.DB, user *entity.User) error {
+	return tx.Save(user).Error
 }

@@ -13,6 +13,7 @@ type PembayaranMySQLItf interface {
 	GetPembayaranByUserId(userId uuid.UUID) ([]entity.Pembayaran, error)
 	GetPembayaranByOrderId(orderId string) (entity.Pembayaran, error)
 	UpdatePembayaran(id uuid.UUID, status string) error
+	BeginTransaction() *gorm.DB
 }
 
 type PembayaranMySQL struct {
@@ -53,4 +54,8 @@ func (r *PembayaranMySQL) GetPembayaranByOrderId(orderId string) (entity.Pembaya
 
 func (r *PembayaranMySQL) UpdatePembayaran(id uuid.UUID, status string) error {
 	return r.db.Model(&entity.Pembayaran{}).Where("id = ?", id).Update("status", status).Error
+}
+
+func (r *PembayaranMySQL) BeginTransaction() *gorm.DB {
+	return r.db.Begin()
 }

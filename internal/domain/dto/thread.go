@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -20,6 +18,7 @@ type UpdateThreadRequest struct {
 type ThreadResponse struct {
 	ThreadId uuid.UUID `json:"thread_id"`
 	UserId   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
 	Kategori string    `json:"kategori"`
 	Isi      string    `json:"isi"`
 	Tanggal  string    `json:"tanggal"`
@@ -28,9 +27,10 @@ type ThreadResponse struct {
 type ThreadDetailResponse struct {
 	ThreadId uuid.UUID `json:"thread_id"`
 	UserId   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
 	Kategori string    `json:"kategori"`
 	Isi      string    `json:"isi"`
-	Tanggal  time.Time `json:"tanggal"`
+	Tanggal  string    `json:"tanggal"`
 	Comments []Comment `json:"comments"`
 }
 
@@ -38,6 +38,7 @@ type Comment struct {
 	CommentId   uuid.UUID `json:"comment_id"`
 	ThreadId    uuid.UUID `json:"thread_id"`
 	UserId      uuid.UUID `json:"user_id"`
+	Username    string    `json:"username"`
 	IsiKomentar string    `json:"isi_komentar"`
 	Tanggal     string    `json:"tanggal"`
 }

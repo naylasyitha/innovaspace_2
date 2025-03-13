@@ -22,7 +22,7 @@ func NewPembayaranHandler(routerGroup fiber.Router, pembayaranUsecase usecase.Pe
 
 	routerGroup = routerGroup.Group("/pembayaran")
 	routerGroup.Post("/create-pembayaran", PembayaranHandler.middleware.Authentication, PembayaranHandler.CreatePembayaran)
-	routerGroup.Get("/:id", PembayaranHandler.GetPembayaranById)
+	routerGroup.Get("/:id", PembayaranHandler.GetPembayaranByUserId)
 	routerGroup.Post("/status-pembayaran", PembayaranHandler.MidtransHandler)
 	// routerGroup.Get("/pembayaran-user", PembayaranHandler.GetPembayaranByUserID)
 }
@@ -52,8 +52,8 @@ func (h PembayaranHandler) CreatePembayaran(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(pembayaran)
 }
 
-func (h PembayaranHandler) GetPembayaranById(ctx *fiber.Ctx) error {
-	userId, err := uuid.Parse(ctx.Params("id"))
+func (h PembayaranHandler) GetPembayaranByUserId(ctx *fiber.Ctx) error {
+	userId, err := uuid.Parse(ctx.Params("user_id"))
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid transaction Id",

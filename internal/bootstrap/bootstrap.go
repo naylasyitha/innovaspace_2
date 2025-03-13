@@ -136,7 +136,7 @@ func Start() error {
 
 	mentorUsecase := MentorUsecase.NewMentorUsecase(mentorRepo, userRepo)
 	commentUsecase := CommentUsecase.NewCommentUsecase(commentRepo)
-	threadUsecase := ThreadUsecase.NewThreadUsecase(threadRepo, commentRepo)
+	threadUsecase := ThreadUsecase.NewThreadUsecase(threadRepo, commentRepo, userRepo)
 	kelasUsecase := KelasUsecase.NewKelasUsecase(kelasRepo, materiRepo)
 	pembayaranUsecase := PembayaranUsecase.NewPembayaranUsecase(pembayaranRepo, userRepo, snapClient)
 	enrollUsecase := EnrollUsecase.NewEnrollUsecase(enrollRepo, userRepo, kelasRepo)

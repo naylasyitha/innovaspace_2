@@ -76,8 +76,6 @@ func (u *PembayaranUsecase) CreatePembayaran(userId uuid.UUID, tipeBayar string,
 		},
 	}
 
-	// fmt.Println("Snap Client:", u.SnapClient)
-	// fmt.Println("Snap Request:", snapRequest)
 	snapResponse, err := u.SnapClient.CreateTransaction(snapRequest)
 	if snapResponse == nil {
 		fmt.Println("Error snapResponse nil")
@@ -186,14 +184,22 @@ func (u PembayaranUsecase) UpdateStatusBayar(orderId string, status string) erro
 		return errors.New("transaction not found")
 	}
 
+	tx := u.pembayaranRepo.BeginTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	err = u.pembayaranRepo.UpdatePembayaran(pembayaran.Id, status)
 	if err != nil {
 		return errors.New("failed to update payment status")
 	}
 
-	if status == "success" {
-		user, err := u.userRepo.FindById(pembayaran.Id)
+	if status == "settlement" || status == "capture" {
+		user, err := u.userRepo.FindById(pembayaran.UserId)
 		if err != nil {
+			tx.Rollback()
 			return errors.New("user not found")
 		}
 
@@ -203,10 +209,12 @@ func (u PembayaranUsecase) UpdateStatusBayar(orderId string, status string) erro
 		premiumEnd := now.AddDate(0, pembayaran.Durasi, 0)
 		user.PremiumEnd = &premiumEnd
 
-		if err := u.userRepo.Update(user); err != nil {
+		if err := u.userRepo.UpdateWithTx(tx, user); err != nil {
+			tx.Rollback()
 			return errors.New("failed to update user premium status")
 		}
 	}
 
+	tx.Commit()
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	CommentRepo "innovaspace/internal/app/comment/repository"
 	"innovaspace/internal/app/thread/repository"
+	UserRepo "innovaspace/internal/app/user/repository"
 	"innovaspace/internal/domain/dto"
 	"innovaspace/internal/domain/entity"
 	"time"
@@ -22,12 +23,14 @@ type ThreadUsecaseItf interface {
 type ThreadUsecase struct {
 	threadRepo  repository.ThreadMySQLItf
 	commentRepo CommentRepo.CommentMySQLItf
+	userRepo    UserRepo.UserMySQLItf
 }
 
-func NewThreadUsecase(threadRepo repository.ThreadMySQLItf, commentRepo CommentRepo.CommentMySQLItf) ThreadUsecaseItf {
+func NewThreadUsecase(threadRepo repository.ThreadMySQLItf, commentRepo CommentRepo.CommentMySQLItf, userRepo UserRepo.UserMySQLItf) ThreadUsecaseItf {
 	return &ThreadUsecase{
 		threadRepo:  threadRepo,
 		commentRepo: commentRepo,
+		userRepo:    userRepo,
 	}
 }
 
@@ -65,10 +68,17 @@ func (u ThreadUsecase) GetAllThreads() ([]dto.ThreadResponse, error) {
 		} else {
 			date = thread.CreatedDate
 		}
+
+		username, err := u.userRepo.FindById(thread.UserId)
+		if err != nil {
+			return nil, err
+		}
+
 		formattedDate := date.Format("02/01/2006 15:04")
 		response = append(response, dto.ThreadResponse{
 			ThreadId: thread.Id,
 			UserId:   thread.UserId,
+			Username: username.Username,
 			Kategori: thread.Kategori,
 			Isi:      thread.Isi,
 			Tanggal:  formattedDate,
@@ -140,10 +150,16 @@ func (u *ThreadUsecase) GetThreadDetails(threadId uuid.UUID) (*dto.ThreadDetailR
 			dateComment = comment.CreatedDate
 		}
 		formattedDate := dateComment.Format("02/01/2006 15:04")
+
+		username, err := u.userRepo.FindById(comment.UserId)
+		if err != nil {
+			return nil, err
+		}
 		commentResponses = append(commentResponses, dto.Comment{
 			CommentId:   comment.Id,
 			ThreadId:    comment.ThreadId,
 			UserId:      comment.UserId,
+			Username:    username.Username,
 			IsiKomentar: comment.IsiKomentar,
 			Tanggal:     formattedDate,
 		})
@@ -155,12 +171,20 @@ func (u *ThreadUsecase) GetThreadDetails(threadId uuid.UUID) (*dto.ThreadDetailR
 	} else {
 		dateThread = thread.CreatedDate
 	}
+
+	formattedDate := dateThread.Format("02/01/2006 15:04")
+
+	username, err := u.userRepo.FindById(thread.UserId)
+	if err != nil {
+		return nil, err
+	}
 	response := &dto.ThreadDetailResponse{
 		ThreadId: thread.Id,
 		UserId:   thread.UserId,
+		Username: username.Username,
 		Kategori: thread.Kategori,
 		Isi:      thread.Isi,
-		Tanggal:  dateThread,
+		Tanggal:  formattedDate,
 		Comments: commentResponses,
 	}
 
