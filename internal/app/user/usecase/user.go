@@ -147,7 +147,10 @@ func (u *UserUsecase) GetProfileById(id uuid.UUID) (dto.GetProfile, error) {
 	}
 
 	var mentors []dto.ProfileMentor
-	if user.MentorId != &uuid.Nil {
+	var mentorID *uuid.UUID
+
+	if user.MentorId != nil && *user.MentorId != uuid.Nil {
+		mentorID = user.MentorId
 		mentor, err := u.mentorRepo.FindById(*user.MentorId)
 		if err != nil {
 			return dto.GetProfile{}, err
@@ -210,7 +213,7 @@ func (u *UserUsecase) GetProfileById(id uuid.UUID) (dto.GetProfile, error) {
 		Email:      user.Email,
 		Preferensi: user.Preferensi,
 		Institusi:  user.Institusi,
-		MentorId:   *user.MentorId,
+		MentorId:   getUUIDValue(mentorID),
 		Mentor:     mentors,
 		Kelas:      resp,
 	}, nil
@@ -248,4 +251,11 @@ func (u UserUsecase) UpdateMentor(userId uuid.UUID, input dto.SetMentor) error {
 	}
 
 	return nil
+}
+
+func getUUIDValue(id *uuid.UUID) uuid.UUID {
+	if id != nil {
+		return *id
+	}
+	return uuid.Nil
 }
