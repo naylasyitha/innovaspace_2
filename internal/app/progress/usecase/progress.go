@@ -12,8 +12,6 @@ import (
 
 type ProgressUsecaseItf interface {
 	CreateProgress(input dto.ProgressRequest) (dto.ProgressResponse, error)
-	// MarkCompleted(userId uuid.UUID, materiId uuid.UUID) error
-	// SubmitAnswer(userId uuid.UUID, materiId uuid.UUID, jawaban string) error
 }
 
 type ProgressUsecase struct {
@@ -59,24 +57,3 @@ func (u *ProgressUsecase) CreateProgress(input dto.ProgressRequest) (dto.Progres
 		IsCompleted: true,
 	}, nil
 }
-
-// func (u *ProgressUsecase) MarkCompleted(userId uuid.UUID, materiId uuid.UUID) error {
-// 	progress, err := u.progressRepo.GetProgressByUserAndMaterial(userId, materiId)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	progress.IsCompleted = true
-// 	return u.progressRepo.UpdateProgress(progress)
-// }
-
-// func (u *ProgressUsecase) SubmitAnswer(userId uuid.UUID, materiId uuid.UUID, jawaban string) error {
-// 	progress, err := u.progressRepo.GetProgressByUserAndMaterial(userId, materiId)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	progress.Jawaban = jawaban
-// 	progress.IsCompleted = true
-// 	return u.progressRepo.UpdateProgress(progress)
-// }

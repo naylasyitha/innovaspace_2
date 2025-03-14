@@ -35,21 +35,6 @@ func NewUserHandler(routerGroup fiber.Router, userUsecase usecase.UserUsecaseItf
 	routerGroup.Patch("/update-mentor/:id", userHandler.middleware.Authentication, userHandler.UpdateMentor)
 }
 
-// func errorResponse(ctx *fiber.Ctx, status int, message string, errors interface{}) error {
-// 	return ctx.Status(status).JSON(fiber.Map{
-// 		"success": false,
-// 		"message": message,
-// 		"errors":  errors,
-// 	})
-// }
-
-// func successResponse(ctx *fiber.Ctx, data interface{}) error {
-// 	return ctx.JSON(fiber.Map{
-// 		"success": true,
-// 		"data":    data,
-// 	})
-// }
-
 func (h *UserHandler) Register(ctx *fiber.Ctx) error {
 	var register dto.Register
 

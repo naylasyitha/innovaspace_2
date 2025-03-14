@@ -146,7 +146,7 @@ func Start() error {
 	MentorHandler.NewMentorHandler(v1, mentorUsecase, userRepo)
 	CommentHandler.NewCommentHandler(v1, commentUsecase, middlewareService)
 	ThreadHandler.NewThreadHandler(v1, threadUsecase, middlewareService)
-	KelasHandler.NewKelasHandler(v1, kelasUsecase, middlewareService)
+	KelasHandler.NewKelasHandler(v1, kelasUsecase)
 	PembayaranHandler.NewPembayaranHandler(v1, pembayaranUsecase, middlewareService)
 	EnrollHandler.NewEnrollHandler(v1, enrollUsecase, middlewareService)
 	ProgressHandler.NewProgressHandler(v1, progressUsecase, middlewareService)

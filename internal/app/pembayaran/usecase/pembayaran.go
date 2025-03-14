@@ -17,7 +17,6 @@ import (
 
 type PembayaranUsecaseItf interface {
 	CreatePembayaran(userId uuid.UUID, tipeBayar string, durasi int) (*dto.PaymentResponse, error)
-	// GetPembayaranById(id uuid.UUID) (*dto.PaymentResponse, error)
 	GetPembayaranByUserId(userId uuid.UUID) ([]dto.PaymentResponse, error)
 	UpdateStatusBayar(orderId string, status string) error
 }
@@ -39,11 +38,11 @@ func NewPembayaranUsecase(paymentRepo repository.PembayaranMySQLItf, userRepo Us
 func calculate(durasi int) int {
 	switch durasi {
 	case 3:
-		return 1000
+		return 150000
 	case 6:
-		return 2000
+		return 300000
 	case 12:
-		return 3000
+		return 500000
 	default:
 		return 0
 	}
@@ -65,6 +64,22 @@ func (u *PembayaranUsecase) CreatePembayaran(userId uuid.UUID, tipeBayar string,
 	}
 
 	orderId := uuid.New().String()
+
+	pembayaran := &entity.Pembayaran{
+		Id:           uuid.New(),
+		UserId:       userId,
+		OrderId:      orderId,
+		Total:        total,
+		Status:       "pending",
+		TipeBayar:    tipeBayar,
+		CreatedDate:  time.Now(),
+		ModifiedDate: time.Now(),
+	}
+
+	if err := u.pembayaranRepo.CreatePembayaran(pembayaran); err != nil {
+		return nil, errors.New("failed to save transaction to database")
+	}
+
 	snapRequest := &snap.Request{
 		TransactionDetails: midtrans.TransactionDetails{
 			OrderID:  orderId,
@@ -81,36 +96,6 @@ func (u *PembayaranUsecase) CreatePembayaran(userId uuid.UUID, tipeBayar string,
 		fmt.Println("Error snapResponse nil")
 		return nil, errors.New("snap response is nil")
 	}
-
-	// midtrans.Error.
-
-	// if err != nil {
-	// 	fmt.Println("Error saat CreateTransaction:\n\n\n\n\n\n\n", err)
-	// 	return nil, fmt.Errorf("failed to create snap transaction: %w", err)
-	// }
-
-	fmt.Println("Snap Response:", snapResponse)
-	fmt.Println("Token:", snapResponse.Token)
-	fmt.Println("Redirect URL:", snapResponse.RedirectURL)
-
-	pembayaran := &entity.Pembayaran{
-		Id:           uuid.New(),
-		UserId:       userId,
-		OrderId:      orderId,
-		Total:        total,
-		Status:       "pending",
-		TipeBayar:    tipeBayar,
-		Token:        snapResponse.Token,
-		PaymentUrl:   snapResponse.RedirectURL,
-		CreatedDate:  time.Now(),
-		ModifiedDate: time.Now(),
-	}
-
-	if err := u.pembayaranRepo.CreatePembayaran(pembayaran); err != nil {
-		return nil, errors.New("failed to save transaction to database")
-	}
-
-	fmt.Println("Menyimpan transaksi ke database:", pembayaran)
 
 	premiumStart := time.Now()
 	premiumEnd := time.Now().AddDate(0, durasi, 0)
@@ -140,24 +125,6 @@ func (u *PembayaranUsecase) CreatePembayaran(userId uuid.UUID, tipeBayar string,
 	return responsePembayaran, nil
 }
 
-// func (u PembayaranUsecase) GetPembayaranById(id uuid.UUID) (*dto.PaymentResponse, error) {
-// 	pembayaran, err := u.pembayaranRepo.GetPembayaranById(id)
-// 	if err != nil {
-// 		return nil, errors.New("transaction not found")
-// 	}
-
-// 	responsePembayaran := &dto.PaymentResponse{
-// 		Id:          pembayaran.Id,
-// 		OrderID:     pembayaran.OrderId,
-// 		Total:       pembayaran.Total,
-// 		Status:      pembayaran.Status,
-// 		Token:       pembayaran.Token,
-// 		CreatedDate: pembayaran.CreatedDate.Format(time.RFC3339),
-// 	}
-
-// 	return responsePembayaran, nil
-// }
-
 func (u PembayaranUsecase) GetPembayaranByUserId(userId uuid.UUID) ([]dto.PaymentResponse, error) {
 	pembayaran, err := u.pembayaranRepo.GetPembayaranByUserId(userId)
 	if err != nil {
@@ -178,7 +145,7 @@ func (u PembayaranUsecase) GetPembayaranByUserId(userId uuid.UUID) ([]dto.Paymen
 	return responsePembayaran, nil
 }
 
-func (u PembayaranUsecase) UpdateStatusBayar(orderId string, status string) error {
+func (u PembayaranUsecase) UpdateStatusBayar(orderId, status string) error {
 	pembayaran, err := u.pembayaranRepo.GetPembayaranByOrderId(orderId)
 	if err != nil {
 		return errors.New("transaction not found")
@@ -187,12 +154,14 @@ func (u PembayaranUsecase) UpdateStatusBayar(orderId string, status string) erro
 	tx := u.pembayaranRepo.BeginTransaction()
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Println("Panic detected:", r)
 			tx.Rollback()
 		}
 	}()
 
 	err = u.pembayaranRepo.UpdatePembayaran(pembayaran.Id, status)
 	if err != nil {
+		tx.Rollback()
 		return errors.New("failed to update payment status")
 	}
 
@@ -205,8 +174,8 @@ func (u PembayaranUsecase) UpdateStatusBayar(orderId string, status string) erro
 
 		user.IsPremium = true
 		now := time.Now()
+		premiumEnd := now.AddDate(0, pembayaran.Durasi, 0) // Gunakan variabel yang sama
 		user.PremiumStart = &now
-		premiumEnd := now.AddDate(0, pembayaran.Durasi, 0)
 		user.PremiumEnd = &premiumEnd
 
 		if err := u.userRepo.UpdateWithTx(tx, user); err != nil {

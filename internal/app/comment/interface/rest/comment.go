@@ -86,7 +86,6 @@ func (h *CommentHandler) UpdateComment(ctx *fiber.Ctx) error {
 			"Format request tidak valid", "Format JSON tidak sesuai")
 	}
 
-	// input.UserId = userId
 	updatedComment, err := h.CommentUsecase.UpdateComment(userId, commentId, input)
 	if err != nil {
 		switch err.Error() {

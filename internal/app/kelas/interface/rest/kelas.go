@@ -2,20 +2,17 @@ package rest
 
 import (
 	"innovaspace/internal/app/kelas/usecase"
-	"innovaspace/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 type KelasHandler struct {
 	kelasUsecase usecase.KelasUsecaseItf
-	middleware   middleware.MiddlewareItf
 }
 
-func NewKelasHandler(routerGroup fiber.Router, kelasUsecase usecase.KelasUsecaseItf, middleware middleware.MiddlewareItf) {
+func NewKelasHandler(routerGroup fiber.Router, kelasUsecase usecase.KelasUsecaseItf) {
 	KelasHandler := KelasHandler{
 		kelasUsecase: kelasUsecase,
-		middleware:   middleware,
 	}
 
 	routerGroup = routerGroup.Group("/kelas")
