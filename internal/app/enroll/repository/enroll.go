@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"innovaspace/internal/domain/entity"
 
 	"github.com/google/uuid"
@@ -26,6 +27,9 @@ func (r *EnrollMySQL) CreateEnroll(enroll entity.Enroll) error {
 
 func (r *EnrollMySQL) FindByUserId(id uuid.UUID) ([]entity.Enroll, error) {
 	var enrolls []entity.Enroll
-	err := r.db.Where("user_id = ?", id).Find(&enrolls).Error
+	err := r.db.Model(entity.Enroll{}).Where("user_id = ?", id).Find(&enrolls).Error
+
+	// fmt.Println("Query Result:", err.RowsAffected)
+	fmt.Println("Enrollment Data:", enrolls)
 	return enrolls, err
 }

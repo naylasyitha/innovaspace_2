@@ -169,23 +169,34 @@ func (u *UserUsecase) GetProfileById(id uuid.UUID) (dto.GetProfile, error) {
 
 	enrollList, err := u.enrollRepo.FindByUserId(id)
 	if err != nil {
+		fmt.Println("Error FindByUserId:", err)
 		return dto.GetProfile{}, err
 	}
+	fmt.Println("Jumlah Enrollment:", len(enrollList))
+	fmt.Println("Enrollments:", enrollList)
 
 	var resp []dto.ProfileKelas
 	for _, enroll := range enrollList {
+		fmt.Println("Proses kelas ID:", enroll.KelasId)
 		kelas, err := u.kelasRepo.FindById(enroll.KelasId)
 		if err != nil {
+			fmt.Println("Error mendapatkan kelas:", err)
 			return dto.GetProfile{}, err
 		}
+		fmt.Println("Kelas ditemukan:", kelas)
 
 		progressList, err := u.progressRepo.GetProgressByUserAndKelas(id, enroll.KelasId)
-
 		if err != nil {
-			return dto.GetProfile{}, err
+			fmt.Println("Error mendapatkan progress:", err)
+			progressList = []entity.Progress{}
 		}
 
-		totalProgress := len(progressList)
+		var totalProgress int
+		if progressList == nil {
+			totalProgress = 0
+		} else {
+			totalProgress = len(progressList)
+		}
 
 		var persenProgress float64
 		if kelas.JumlahMateri > 0 {

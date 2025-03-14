@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"innovaspace/internal/domain/entity"
 
 	"gorm.io/gorm"
@@ -22,8 +23,10 @@ func NewKelasMySQL(db *gorm.DB) KelasMySQLItf {
 func (r *KelasMySQL) FindById(id string) (*entity.Kelas, error) {
 	var kelas entity.Kelas
 	err := r.db.Where("id = ?", id).First(&kelas).Error
+	fmt.Println("Kelas Data:", kelas)
 	if err != nil {
 		return nil, err
+
 	}
 	return &kelas, nil
 }
