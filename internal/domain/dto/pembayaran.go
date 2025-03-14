@@ -16,11 +16,19 @@ type PaymentResponse struct {
 	Status      string    `json:"status"`
 	Token       string    `json:"token"`
 	PaymentUrl  string    `json:"payment_url"`
-	CreatedDate string    `json:"created_at"`
+	CreatedDate string    `json:"created_date"`
 }
 
 type MidtransWebhookRequest struct {
 	OrderId           string `json:"order_id"`
 	TransactionStatus string `json:"transaction_status"`
 	FraudStatus       string `json:"fraud_status"`
+}
+
+type ProfilePembayaran struct {
+	CreatedDate string    `json:"created_date"`
+	OrderId     uuid.UUID `json:"order_id"`
+	TipeBayar   string    `json:"tipe_bayar"`
+	Total       int       `json:"total"`
+	Status      string    `json:"status"`
 }

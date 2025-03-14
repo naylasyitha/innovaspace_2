@@ -59,3 +59,9 @@ func (r *PembayaranMySQL) UpdatePembayaran(id uuid.UUID, status string) error {
 func (r *PembayaranMySQL) BeginTransaction() *gorm.DB {
 	return r.db.Begin()
 }
+
+func (r *PembayaranMySQL) FindByUserId(id uuid.UUID) ([]entity.Pembayaran, error) {
+	var pembayaran []entity.Pembayaran
+	err := r.db.Where("user_id = ?", id).Find(pembayaran).Error
+	return pembayaran, err
+}
