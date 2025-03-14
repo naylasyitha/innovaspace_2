@@ -214,8 +214,8 @@ func (u *UserUsecase) GetProfileById(id uuid.UUID) (dto.GetProfile, error) {
 		Preferensi: user.Preferensi,
 		Institusi:  user.Institusi,
 		MentorId:   getUUIDValue(mentorID),
-		Mentor:     mentors,
-		Kelas:      resp,
+		Mentor:     ensureNotNilMentors(mentors),
+		Kelas:      ensureNotNilKelas(resp),
 	}, nil
 }
 
@@ -258,4 +258,18 @@ func getUUIDValue(id *uuid.UUID) uuid.UUID {
 		return *id
 	}
 	return uuid.Nil
+}
+
+func ensureNotNilMentors(mentors []dto.ProfileMentor) []dto.ProfileMentor {
+	if mentors == nil {
+		return []dto.ProfileMentor{}
+	}
+	return mentors
+}
+
+func ensureNotNilKelas(kelas []dto.ProfileKelas) []dto.ProfileKelas {
+	if kelas == nil {
+		return []dto.ProfileKelas{}
+	}
+	return kelas
 }
